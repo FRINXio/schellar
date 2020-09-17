@@ -154,7 +154,11 @@ curl -X POST \
 		"param2": "value2"
 	},
 	"fromDate": "2019-01-01T15:04:05Z",
-	"toDate": "2019-07-01T15:04:05Z"
+	"toDate": "2019-07-01T15:04:05Z",
+	"correlationId" "myid",
+        "taskToDomain": {
+		"*": "mydomain"
+	}
       }'
 ```
 * Where
@@ -169,6 +173,8 @@ curl -X POST \
     * When a workflow instance is COMPLETED, its output values will be merged to the current schedule workflow context so that these new values will be used on the next workflow instantiation calls as "input". 
     * This may be useful in cases where your workers want to return data that will be used on following workflow calls. For example, workflow instance 1 will process from date 2019-01-01 to 2019-01-15 and its output will be lastDate=2019-01-15; than instance2 from 2019-01-16 to 2019-02-11 and returns lastDate=2019-02-11 and so on.
   * **parallelRuns** - if true, every trigger from timer (according to cron string) will generate a new workflow instance in Conductor. if false, no new workflows will be generated if there are other workflow instances in state RUNNING, so that only one RUNNING instance will be present at a time
+  * **correlationId** - passed to Conductor when starting a workflow, see https://netflix.github.io/conductor/gettingstarted/startworkflow/
+  * **taskToDomain** - passed to Conductor when starting a workflow, see https://netflix.github.io/conductor/configuration/taskdomains/
   
   * **GET /schedule**
     * Returns a list of schedules

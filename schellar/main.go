@@ -35,6 +35,8 @@ type Schedule struct {
 	FromDate            *time.Time             `json:"fromDate,omitempty" bson:"fromDate"`
 	ToDate              *time.Time             `json:"toDate,omitempty" bson:"toDate"`
 	LastUpdate          time.Time              `json:"lastUpdate,omitempty" bson:"lastUpdate"`
+	CorrelationID       string                 `json:"correlationId,omitempty" bson:"correlationId"`
+	TaskToDomain        map[string]string      `json:"taskToDomain,omitempty" bson:"taskToDomain"`
 }
 
 func (schedule Schedule) ValidateAndUpdate() error {
