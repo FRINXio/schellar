@@ -33,6 +33,12 @@ func launchWorkflow(scheduleName string) error {
 	wf["version"] = schedule.WorkflowVersion
 	wf["input"] = schedule.WorkflowContext
 	wf["input"].(map[string]interface{})["scheduleName"] = schedule.Name
+	if len(schedule.CorrelationID) > 0 {
+		wf["correlationId"] = schedule.CorrelationID
+	}
+	if len(schedule.TaskToDomain) > 0 {
+		wf["taskToDomain"] = schedule.TaskToDomain
+	}
 	wfb, _ := json.Marshal(wf)
 
 	logrus.Debugf("Launching Workflow %s", wf)
