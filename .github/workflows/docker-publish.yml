@@ -46,6 +46,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Build image
         run: docker build . --file Dockerfile --tag $IMAGE_NAME
@@ -74,3 +76,18 @@ jobs:
 
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
+
+          # Add latest tag if we are on master and github.ref points to a tag
+          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+            MASTER=$(git show-ref --hash origin/master)
+            echo "master: $MASTER"
+            HEAD=$(git rev-parse HEAD)
+            echo "head: $HEAD"
+            echo "github.ref ${{ github.ref }}"
+            if [[ $MASTER == $HEAD ]]; then
+              VERSION=latest
+              echo VERSION=$VERSION
+              docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+              docker push $IMAGE_ID:$VERSION
+            fi
+          fi
