@@ -1,21 +1,18 @@
 # schellar
 
-[<img src="https://img.shields.io/docker/pulls/flaviostutz/schellar"/>](https://hub.docker.com/r/flaviostutz/schellar)
-[<img src="https://img.shields.io/docker/automated/flaviostutz/schellar"/>](https://hub.docker.com/r/flaviostutz/schellar)
+[<img src="https://img.shields.io/docker/pulls/frinx/schellar"/>](https://hub.docker.com/r/frinx/schellar)
+[<img src="https://img.shields.io/docker/automated/frinx/schellar"/>](https://hub.docker.com/r/frinx/schellar)
 
 Schellar is a scheduler tool for invoking Conductor workflows from time to time
 
-Check another tool that may be helpful:
-* [Backtor](https://github.com/flaviostutz/backtor) is a backup scheduler tool that uses Conductor workers to handle backup operations)
-
 ## Usage
 
-* Checkout this repo 
+* Checkout this repo
 
   * Needed just to use the sample Conductor workflow at "/example-conductor"
 
 ```
-git clone github.com/flaviostutz/schellar
+git clone github.com/frinxio/schellar
 
 ```
 
@@ -27,7 +24,7 @@ version: '3.5'
 services:
 
   schellar:
-    image: flaviostutz/schellar
+    image: frinx/schellar
     environment:
       - CONDUCTOR_API_URL=http://conductor-server:8080/api
       - MONGO_ADDRESS=mongo
@@ -89,12 +86,6 @@ services:
         max-size: "20MB"
         max-file: "5"
 
-  conductor-ui:
-    image: flaviostutz/conductor-ui
-    environment:
-      - WF_SERVER=http://conductor-server:8080/api/
-    ports:
-      - 5000:5000
 ```
 
 * Run "docker-compose up" and wait for the logs to calm down :)
@@ -169,13 +160,13 @@ curl -X POST \
   * **toDate** - end date to enable this schedule
   * **workflowName** - workflow name that will be instantiated in Conductor
   * **workflowVersion** - workflow version in Conductor
-  * **workflowContext** - key/value in json style used as input for new workflow instances. 
-    * When a workflow instance is COMPLETED, its output values will be merged to the current schedule workflow context so that these new values will be used on the next workflow instantiation calls as "input". 
+  * **workflowContext** - key/value in json style used as input for new workflow instances.
+    * When a workflow instance is COMPLETED, its output values will be merged to the current schedule workflow context so that these new values will be used on the next workflow instantiation calls as "input".
     * This may be useful in cases where your workers want to return data that will be used on following workflow calls. For example, workflow instance 1 will process from date 2019-01-01 to 2019-01-15 and its output will be lastDate=2019-01-15; than instance2 from 2019-01-16 to 2019-02-11 and returns lastDate=2019-02-11 and so on.
   * **parallelRuns** - if true, every trigger from timer (according to cron string) will generate a new workflow instance in Conductor. if false, no new workflows will be generated if there are other workflow instances in state RUNNING, so that only one RUNNING instance will be present at a time
   * **correlationId** - passed to Conductor when starting a workflow, see https://netflix.github.io/conductor/gettingstarted/startworkflow/
   * **taskToDomain** - passed to Conductor when starting a workflow, see https://netflix.github.io/conductor/configuration/taskdomains/
-  
+
   * **GET /schedule**
     * Returns a list of schedules
 

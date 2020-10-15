@@ -4,7 +4,7 @@ services:
 
   schellar:
     build: .
-    image: flaviostutz/schellar
+    image: frinx/schellar
     environment:
       - CONDUCTOR_API_URL=http://conductor-server:8080/api
       - MONGO_ADDRESS=mongo
@@ -65,10 +65,3 @@ services:
       options:
         max-size: "20MB"
         max-file: "5"
-
-  conductor-ui:
-    image: flaviostutz/conductor-ui
-    environment:
-      - WF_SERVER=http://conductor-server:8080/api/
-    ports:
-      - 5000:5000
