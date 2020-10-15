@@ -168,10 +168,11 @@ func checkRunningWorkflows() {
 	for {
 		startTime := time.Now()
 		sc := mongoSession.Copy()
+		defer sc.Close()
 		sch := sc.DB(dbName).C("schedules")
 		schedules := make([]Schedule, 0)
 		err0 := sch.Find(bson.M{"status": "RUNNING"}).All(&schedules)
-		sc.Close()
+
 		if err0 != nil {
 			logrus.Errorf("Error getting running schedules. err=%s", err0)
 			continue
@@ -221,6 +222,7 @@ func checkRunningWorkflows() {
 
 			logrus.Debugf("Schedule status is %s", scheduleStatus)
 			sc := mongoSession.Copy()
+			defer sc.Close()
 			sch := sc.DB(dbName).C("schedules")
 			scheduleMap := make(map[string]interface{})
 			scheduleMap["status"] = scheduleStatus
@@ -239,7 +241,7 @@ func checkRunningWorkflows() {
 			if scheduleStatus != schedule.Status {
 				logrus.Infof("Schedule %s: Changing status to %s", schedule.Name, scheduleStatus)
 			}
-			sc.Close()
+
 			if err0 != nil {
 				logrus.Errorf("Error updating schedule %s to status %s. err=%s", schedule.Name, scheduleStatus, err0)
 			}

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -93,16 +94,17 @@ func getWorkflowInstance(workflowID string) (map[string]interface{}, error) {
 }
 
 func findWorkflows(workflowType string, scheduleName string, running bool) (map[string]interface{}, error) {
-	logrus.Debugf("findWorkflows %s", workflowType)
+	logrus.Debugf("findWorkflows(workflowType=%s,scheduleName=%s,running=%v)", workflowType, scheduleName, running)
+	// escape : -> \:
+	workflowType = strings.ReplaceAll(workflowType, ":", "\\:")
+	scheduleName = strings.ReplaceAll(scheduleName, ":", "\\:")
 	runstr := ""
-	if running {
-		runstr = " AND status=RUNNING"
-	} else {
-		runstr = " AND NOT status=RUNNING"
+	if !running {
+		runstr = "NOT"
 	}
-	freeText := fmt.Sprintf("workflowType:%s AND scheduleName=%s%s", workflowType, scheduleName, runstr)
+	freeText := fmt.Sprintf("workflowType:%s AND scheduleName:%s AND (%s status:RUNNING)", workflowType, scheduleName, runstr)
+	logrus.Debugf("search freeText=%s", freeText)
 	sr := fmt.Sprintf("%s/workflow/search?freeText=%s&sort=endTime:DESC&size=5", conductorURL, url.QueryEscape(freeText))
-	// logrus.Debugf("WORKFLOW SEARCH URL=%s", sr)
 	resp, data, err := getHTTP(sr)
 	if err != nil {
 		return nil, fmt.Errorf("GET /workflow/search failed. err=%s", err)
