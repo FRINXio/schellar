@@ -229,12 +229,10 @@ func checkRunningWorkflows() {
 			scheduleMap["lastUpdate"] = time.Now()
 
 			if len(wfoutput) > 0 {
-				logrus.Debugf("Merging workflow output to schedule context. output=%s", wfoutput)
-				m := schedule.WorkflowContext
-				for k, v := range wfoutput {
-					m[k] = v
-				}
-				scheduleMap["workflowContext"] = m
+				schedule.WorkflowContext["lastExecution"] = wfoutput
+				logrus.Debugf("Adding last workflow output to schedule context. output=%s, workflowContext=%s",
+					wfoutput, schedule.WorkflowContext)
+				scheduleMap["workflowContext"] = schedule.WorkflowContext
 			}
 
 			err0 = sch.Update(bson.M{"name": schedule.Name}, bson.M{"$set": scheduleMap})
