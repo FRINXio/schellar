@@ -1,12 +1,7 @@
-FROM golang:1.12.5-stretch as builder
+FROM golang:1.15.3-alpine as builder
 
 RUN mkdir /schellar
 WORKDIR /schellar
-
-ADD schellar/go.mod .
-#ADD go.sum .
-
-RUN go mod download
 
 ADD schellar/. .
 

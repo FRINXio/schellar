@@ -1,4 +1,4 @@
-module github.com/flaviostutz/schellar
+module github.com/frinx/schellar
 
 go 1.14
 
