@@ -11,7 +11,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type DB interface {
+	FindAll() ([]Schedule, error)
+	FindAllByEnabled(enabled bool) ([]Schedule, error)
+	FindByName(scheduleName string) (*Schedule, error)
+	FindByStatus(status string) ([]Schedule, error)
+	UpdateStatus(scheduleName string, scheduleStatus string) error
+	UpdateStatusAndWorkflowContext(schedule Schedule) error
+	Insert(schedule Schedule) error
+	Update(schedule Schedule) error
+	RemoveByName(scheduleName string) error
+}
+
+type DBFactory interface {
+	InitDB() (DB, error)
+}
+
 var (
+	db                   DB
 	conductorURL         string
 	mongoAddress         string
 	mongoUsername        string
@@ -107,7 +124,8 @@ func main() {
 
 	logrus.Info("====Starting Schellar====")
 
-	err := initMongo()
+	var err error
+	db, err = InitDB()
 	if err != nil {
 		logrus.Fatalf("Couldn't init database: %v", err)
 	}

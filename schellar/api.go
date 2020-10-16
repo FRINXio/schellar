@@ -46,7 +46,7 @@ func createSchedule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//check duplicate schedule
-	found, err1 := FindByName(schedule.Name)
+	found, err1 := db.FindByName(schedule.Name)
 	if err1 != nil {
 		writeResponse(w, http.StatusInternalServerError, "Error checking for existing schedule name")
 		logrus.Errorf("Error checking for existing schedule name. err=%s", err1)
@@ -60,7 +60,7 @@ func createSchedule(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("Saving schedule %s for workflow %s", schedule.Name, schedule.WorkflowName)
 	logrus.Debugf("schedule: %v", schedule)
 
-	err0 := Insert(schedule)
+	err0 := db.Insert(schedule)
 	if err0 != nil {
 		writeResponse(w, http.StatusInternalServerError, "Error storing schedule.")
 		logrus.Errorf("Error storing schedule to the database. err=%s", err0)
@@ -92,7 +92,7 @@ func updateSchedule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logrus.Debugf("Updating schedule with %v", schedule)
-	found, err1 := FindByName(name)
+	found, err1 := db.FindByName(name)
 	if err1 != nil {
 		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error updating schedule"))
 		logrus.Errorf("Couldn't find schedule name %s. err=%s", name, err1)
@@ -103,7 +103,7 @@ func updateSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = Update(schedule)
+	err = db.Update(schedule)
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, "Error updating schedule")
 		logrus.Errorf("Error updating schedule %s. err=%s", name, err)
@@ -116,7 +116,7 @@ func updateSchedule(w http.ResponseWriter, r *http.Request) {
 func listSchedules(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("listSchedules r=%v", r)
 
-	schedules, err := FindAll()
+	schedules, err := db.FindAll()
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error listing schedules. err=%s", err.Error()))
 		return
@@ -137,7 +137,7 @@ func getSchedule(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("getSchedule r=%v", r)
 	name := mux.Vars(r)["name"]
 
-	schedule, err := FindByName(name)
+	schedule, err := db.FindByName(name)
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error getting schedule. err=%s", err.Error()))
 		return
@@ -157,7 +157,7 @@ func deleteSchedule(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("deleteSchedule r=%v", r)
 	name := mux.Vars(r)["name"]
 
-	err := RemoveByName(name)
+	err := db.RemoveByName(name)
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error deleting schedule. err=%s", err.Error()))
 		return

@@ -18,7 +18,7 @@ func launchWorkflow(scheduleName string) error {
 
 	logrus.Debugf("Loading schedule definitions from DB")
 
-	schedule, err := FindByName(scheduleName)
+	schedule, err := db.FindByName(scheduleName)
 	if err != nil {
 		logrus.Errorf("Couldn't find schedule %s", scheduleName)
 		return err

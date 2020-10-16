@@ -9,11 +9,11 @@ import (
 	"gopkg.in/mgo.v2"
 )
 
-var (
+type MongoDB struct {
 	mongoSession *mgo.Session
-)
+}
 
-func initMongo() error {
+func InitDB() (DB, error) {
 	logrus.Debugf("Connecting to MongoDB")
 	mongoDBDialInfo := &mgo.DialInfo{
 		Addrs:    strings.Split(mongoAddress, ","),
@@ -23,6 +23,7 @@ func initMongo() error {
 		Password: mongoPassword,
 	}
 
+	var mongoSession *mgo.Session
 	for i := 0; i < 30; i++ {
 		ms, err := mgo.DialWithInfo(mongoDBDialInfo)
 		if err != nil {
@@ -37,13 +38,13 @@ func initMongo() error {
 	}
 
 	if mongoSession == nil {
-		return errors.New("Couldn't connect to MongoDB")
+		return nil, errors.New("Couldn't connect to MongoDB")
 	}
-	return nil
+	return MongoDB{mongoSession}, nil
 }
 
-func FindAll() ([]Schedule, error) {
-	sc := mongoSession.Copy()
+func (db MongoDB) FindAll() ([]Schedule, error) {
+	sc := db.mongoSession.Copy()
 	defer sc.Close()
 
 	st := sc.DB(dbName).C("schedules")
@@ -52,8 +53,8 @@ func FindAll() ([]Schedule, error) {
 	return schedules, err
 }
 
-func FindAllByEnabled(enabled bool) ([]Schedule, error) {
-	sc := mongoSession.Copy()
+func (db MongoDB) FindAllByEnabled(enabled bool) ([]Schedule, error) {
+	sc := db.mongoSession.Copy()
 	defer sc.Close()
 
 	st := sc.DB(dbName).C("schedules")
@@ -62,8 +63,8 @@ func FindAllByEnabled(enabled bool) ([]Schedule, error) {
 	return activeSchedules, err
 }
 
-func FindByName(scheduleName string) (*Schedule, error) {
-	sc := mongoSession.Copy()
+func (db MongoDB) FindByName(scheduleName string) (*Schedule, error) {
+	sc := db.mongoSession.Copy()
 	defer sc.Close()
 
 	var schedule Schedule
@@ -72,8 +73,8 @@ func FindByName(scheduleName string) (*Schedule, error) {
 	return &schedule, err
 }
 
-func FindByStatus(status string) ([]Schedule, error) {
-	sc := mongoSession.Copy()
+func (db MongoDB) FindByStatus(status string) ([]Schedule, error) {
+	sc := db.mongoSession.Copy()
 	defer sc.Close()
 
 	sch := sc.DB(dbName).C("schedules")
@@ -82,8 +83,8 @@ func FindByStatus(status string) ([]Schedule, error) {
 	return schedules, err
 }
 
-func UpdateStatus(scheduleName string, scheduleStatus string) error {
-	sc := mongoSession.Copy()
+func (db MongoDB) UpdateStatus(scheduleName string, scheduleStatus string) error {
+	sc := db.mongoSession.Copy()
 	defer sc.Close()
 
 	statusMap := make(map[string]interface{})
@@ -94,8 +95,8 @@ func UpdateStatus(scheduleName string, scheduleStatus string) error {
 	return sr.Update(map[string]interface{}{"name": scheduleName}, map[string]interface{}{"$set": statusMap})
 }
 
-func UpdateStatusAndWorkflowContext(schedule Schedule) error {
-	sc := mongoSession.Copy()
+func (db MongoDB) UpdateStatusAndWorkflowContext(schedule Schedule) error {
+	sc := db.mongoSession.Copy()
 	defer sc.Close()
 
 	sch := sc.DB(dbName).C("schedules")
@@ -107,23 +108,23 @@ func UpdateStatusAndWorkflowContext(schedule Schedule) error {
 	return sch.Update(map[string]interface{}{"name": schedule.Name}, map[string]interface{}{"$set": scheduleMap})
 }
 
-func Insert(schedule Schedule) error {
-	sc := mongoSession.Copy()
+func (db MongoDB) Insert(schedule Schedule) error {
+	sc := db.mongoSession.Copy()
 	defer sc.Close()
 	st := sc.DB(dbName).C("schedules")
 	return st.Insert(schedule)
 }
 
-func Update(schedule Schedule) error {
-	sc := mongoSession.Copy()
+func (db MongoDB) Update(schedule Schedule) error {
+	sc := db.mongoSession.Copy()
 	defer sc.Close()
 
 	st := sc.DB(dbName).C("schedules")
 	return st.Update(map[string]interface{}{"name": schedule.Name}, map[string]interface{}{"$set": schedule})
 }
 
-func RemoveByName(scheduleName string) error {
-	sc := mongoSession.Copy()
+func (db MongoDB) RemoveByName(scheduleName string) error {
+	sc := db.mongoSession.Copy()
 	defer sc.Close()
 
 	st := sc.DB(dbName).C("schedules")

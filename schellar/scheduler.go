@@ -24,7 +24,7 @@ func startScheduler() error {
 func prepareTimers() error {
 	logrus.Debugf("Refreshing timers according to active schedules")
 
-	activeSchedules, err := FindAllByEnabled(true)
+	activeSchedules, err := db.FindAllByEnabled(true)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func prepareTimers() error {
 
 func launchSchedule(scheduleName string) error {
 
-	schedule0, err := FindByName(scheduleName)
+	schedule0, err := db.FindByName(scheduleName)
 	if err != nil {
 		logrus.Errorf("Couldn't get schedule %s. err=%s", scheduleName, err)
 		return err
@@ -80,7 +80,7 @@ func launchSchedule(scheduleName string) error {
 	c.AddFunc(schedule0.CronString, func() {
 		logrus.Debugf("Processing timer trigger for schedule %s", scheduleName)
 
-		schedule, err := FindByName(scheduleName)
+		schedule, err := db.FindByName(scheduleName)
 		if err != nil {
 			logrus.Errorf("Couldn't get schedule %s. err=%s", scheduleName, err)
 			return
@@ -127,7 +127,7 @@ func launchSchedule(scheduleName string) error {
 			}
 
 			logrus.Debugf("Updating Schedule status. name=%s. status=%s", scheduleName, "RUNNING")
-			err0 := UpdateStatus(scheduleName, scheduleStatus)
+			err0 := db.UpdateStatus(scheduleName, scheduleStatus)
 			if err0 != nil {
 				logrus.Errorf("Error saving Schedule status err=%s", err0)
 			}
@@ -147,7 +147,7 @@ func checkRunningWorkflows() {
 	logrus.Debugf("Starting to check running workflow status")
 	for {
 		startTime := time.Now()
-		schedules, err0 := FindByStatus("RUNNING")
+		schedules, err0 := db.FindByStatus("RUNNING")
 
 		if err0 != nil {
 			logrus.Errorf("Error getting running schedules. err=%s", err0)
@@ -206,7 +206,7 @@ func checkRunningWorkflows() {
 					wfoutput, schedule.WorkflowContext)
 				schedule.WorkflowContext["lastExecution"] = wfoutput
 			}
-			err0 = UpdateStatusAndWorkflowContext(schedule)
+			err0 = db.UpdateStatusAndWorkflowContext(schedule)
 			if err0 != nil {
 				logrus.Errorf("Error updating schedule %s to status %s. err=%s", schedule.Name, scheduleStatus, err0)
 			}
