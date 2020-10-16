@@ -6,6 +6,8 @@ import (
 
 	"encoding/json"
 
+	"github.com/frinx/schellar/ifc"
+
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -33,7 +35,7 @@ func createSchedule(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("createSchedule r=%v", r)
 
 	decoder := json.NewDecoder(r.Body)
-	var schedule Schedule
+	var schedule ifc.Schedule
 	err := decoder.Decode(&schedule)
 	if err != nil {
 		writeResponse(w, http.StatusBadRequest, fmt.Sprintf("Error handling post results. err=%s", err.Error()))
@@ -79,7 +81,7 @@ func updateSchedule(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
-	var schedule Schedule
+	var schedule ifc.Schedule
 	err := decoder.Decode(&schedule)
 	if err != nil {
 		writeResponse(w, http.StatusBadRequest, fmt.Sprintf("Error handling post results. err=%s", err.Error()))
