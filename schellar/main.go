@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
-	mgo "gopkg.in/mgo.v2"
 )
 
 var (
@@ -108,37 +107,14 @@ func main() {
 
 	logrus.Info("====Starting Schellar====")
 
-	logrus.Debugf("Connecting to MongoDB")
-	mongoDBDialInfo := &mgo.DialInfo{
-		Addrs:    strings.Split(mongoAddress, ","),
-		Timeout:  2 * time.Second,
-		Database: dbName,
-		Username: mongoUsername,
-		Password: mongoPassword,
-	}
-
-	for i := 0; i < 30; i++ {
-		ms, err := mgo.DialWithInfo(mongoDBDialInfo)
-		if err != nil {
-			logrus.Infof("Couldn't connect to mongdb. err=%s", err)
-			time.Sleep(1 * time.Second)
-			logrus.Infof("Retrying...")
-			continue
-		}
-		mongoSession = ms
-		logrus.Infof("Connected to MongoDB successfully")
-		break
-	}
-
-	if mongoSession == nil {
-		logrus.Errorf("Couldn't connect to MongoDB")
-		os.Exit(1)
-	}
-
-	err := startScheduler()
+	err := initMongo()
 	if err != nil {
-		logrus.Errorf("Error during scheduler startup. err=%s", err)
-		os.Exit(1)
+		logrus.Fatalf("Couldn't init database: %v", err)
+	}
+
+	err = startScheduler()
+	if err != nil {
+		logrus.Fatalf("Error during scheduler startup: %v", err)
 	}
 	startRestAPI()
 }

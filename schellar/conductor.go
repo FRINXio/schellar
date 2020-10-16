@@ -17,12 +17,8 @@ func launchWorkflow(scheduleName string) error {
 	logrus.Debugf("startWorkflow scheduleName=%s", scheduleName)
 
 	logrus.Debugf("Loading schedule definitions from DB")
-	var schedule Schedule
-	sc := mongoSession.Copy()
-	defer sc.Close()
-	st := sc.DB(dbName).C("schedules")
 
-	err := st.Find(map[string]interface{}{"name": scheduleName}).One(&schedule)
+	schedule, err := FindByName(scheduleName)
 	if err != nil {
 		logrus.Errorf("Couldn't find schedule %s", scheduleName)
 		return err
