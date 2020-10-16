@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 var (
@@ -59,7 +58,7 @@ func createSchedule(w http.ResponseWriter, r *http.Request) {
 	st := sc.DB(dbName).C("schedules")
 
 	//check duplicate schedule
-	c, err1 := st.Find(bson.M{"name": schedule.Name}).Count()
+	c, err1 := st.Find(map[string]interface{}{"name": schedule.Name}).Count()
 	if err1 != nil {
 		writeResponse(w, http.StatusInternalServerError, "Error checking for existing schedule name")
 		logrus.Errorf("Error checking for existing schedule name. err=%s", err1)
@@ -108,7 +107,7 @@ func updateSchedule(w http.ResponseWriter, r *http.Request) {
 	st := sc.DB(dbName).C("schedules")
 
 	logrus.Debugf("Updating schedule with %v", schedule)
-	c, err1 := st.Find(bson.M{"name": name}).Count()
+	c, err1 := st.Find(map[string]interface{}{"name": name}).Count()
 	if err1 != nil {
 		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error updating schedule"))
 		logrus.Errorf("Couldn't find schedule name %s. err=%s", name, err1)
@@ -118,7 +117,7 @@ func updateSchedule(w http.ResponseWriter, r *http.Request) {
 		writeResponse(w, http.StatusNotFound, fmt.Sprintf("Couldn't find schedule %s", name))
 		return
 	}
-	err = st.Update(bson.M{"name": name}, bson.M{"$set": schedule})
+	err = st.Update(map[string]interface{}{"name": name}, map[string]interface{}{"$set": schedule})
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, "Error updating schedule")
 		logrus.Errorf("Error updating schedule %s. err=%s", name, err)
@@ -164,7 +163,7 @@ func getSchedule(w http.ResponseWriter, r *http.Request) {
 
 	// var schedule map[string]interface{}
 	var schedule Schedule
-	err := st.Find(bson.M{"name": name}).One(&schedule)
+	err := st.Find(map[string]interface{}{"name": name}).One(&schedule)
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error getting schedule. err=%s", err.Error()))
 		return
@@ -188,7 +187,7 @@ func deleteSchedule(w http.ResponseWriter, r *http.Request) {
 	defer sc.Close()
 	st := sc.DB(dbName).C("schedules")
 
-	err := st.Remove(bson.M{"name": name})
+	err := st.Remove(map[string]interface{}{"name": name})
 	if err != nil {
 		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error deleting schedule. err=%s", err.Error()))
 		return

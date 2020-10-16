@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"gopkg.in/mgo.v2/bson"
 )
 
 func launchWorkflow(scheduleName string) error {
@@ -23,7 +22,7 @@ func launchWorkflow(scheduleName string) error {
 	defer sc.Close()
 	st := sc.DB(dbName).C("schedules")
 
-	err := st.Find(bson.M{"name": scheduleName}).One(&schedule)
+	err := st.Find(map[string]interface{}{"name": scheduleName}).One(&schedule)
 	if err != nil {
 		logrus.Errorf("Couldn't find schedule %s", scheduleName)
 		return err

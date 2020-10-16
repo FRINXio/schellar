@@ -6,7 +6,6 @@ import (
 
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/mgo.v2/bson"
 )
 
 var (
@@ -31,7 +30,7 @@ func prepareTimers() error {
 
 	// var schedules []map[string]interface{}
 	var activeSchedules []Schedule
-	err := st.Find(bson.M{"enabled": true}).All(&activeSchedules)
+	err := st.Find(map[string]interface{}{"enabled": true}).All(&activeSchedules)
 	if err != nil {
 		return err
 	}
@@ -81,7 +80,7 @@ func launchSchedule(scheduleName string) error {
 	var schedule0 Schedule
 	st := sc.DB(dbName).C("schedules")
 
-	err := st.Find(bson.M{"name": scheduleName}).One(&schedule0)
+	err := st.Find(map[string]interface{}{"name": scheduleName}).One(&schedule0)
 	if err != nil {
 		return err
 	}
@@ -95,7 +94,7 @@ func launchSchedule(scheduleName string) error {
 
 		var schedule Schedule
 		st := sc.DB(dbName).C("schedules")
-		err := st.Find(bson.M{"name": scheduleName}).One(&schedule)
+		err := st.Find(map[string]interface{}{"name": scheduleName}).One(&schedule)
 		if err != nil {
 			logrus.Errorf("Couldn't get schedule %s. err=%s", scheduleName, err)
 			return
@@ -147,7 +146,7 @@ func launchSchedule(scheduleName string) error {
 			statusMap["lastUpdate"] = time.Now()
 
 			sr := sc.DB(dbName).C("schedules")
-			err0 := sr.Update(bson.M{"name": scheduleName}, bson.M{"$set": statusMap})
+			err0 := sr.Update(map[string]interface{}{"name": scheduleName}, map[string]interface{}{"$set": statusMap})
 			if err0 != nil {
 				logrus.Errorf("Error saving Schedule status err=%s", err0)
 			}
@@ -171,7 +170,7 @@ func checkRunningWorkflows() {
 		defer sc.Close()
 		sch := sc.DB(dbName).C("schedules")
 		schedules := make([]Schedule, 0)
-		err0 := sch.Find(bson.M{"status": "RUNNING"}).All(&schedules)
+		err0 := sch.Find(map[string]interface{}{"status": "RUNNING"}).All(&schedules)
 
 		if err0 != nil {
 			logrus.Errorf("Error getting running schedules. err=%s", err0)
@@ -235,7 +234,7 @@ func checkRunningWorkflows() {
 				scheduleMap["workflowContext"] = schedule.WorkflowContext
 			}
 
-			err0 = sch.Update(bson.M{"name": schedule.Name}, bson.M{"$set": scheduleMap})
+			err0 = sch.Update(map[string]interface{}{"name": schedule.Name}, map[string]interface{}{"$set": scheduleMap})
 			if scheduleStatus != schedule.Status {
 				logrus.Infof("Schedule %s: Changing status to %s", schedule.Name, scheduleStatus)
 			}
