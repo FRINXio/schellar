@@ -189,9 +189,11 @@ curl -X PUT \
 
 * CONDUCTOR_API_URL - base URL for accessing the target Conductor API
 
-* CHECK_INTERVAL - Minimum time between running workflows checks
+* CHECK_INTERVAL_SECONDS - Minimum time between running workflows checks
 
 * MONGO_ADDRESS - Mongodb address. Supports full URLs (like "mongo://user1:pass1@mymongo:8372/mydb") or simple form (like "mongo")
+
+* MONGO_DB - mongodb database name
 
 * MONGO_USERNAME - mongodb username
 

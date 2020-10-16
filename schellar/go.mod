@@ -6,6 +6,7 @@ require (
 	github.com/gorilla/handlers v1.5.0
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgx/v4 v4.9.0 // indirect
+	github.com/joho/godotenv v1.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
 	github.com/robfig/cron/v3 v3.0.1
