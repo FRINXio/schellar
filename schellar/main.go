@@ -1,11 +1,12 @@
 package main
 
 import (
-	"flag"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
@@ -24,17 +25,13 @@ type DB interface {
 }
 
 type DBFactory interface {
-	InitDB() (DB, error)
+	InitDB() DB
 }
 
 var (
 	db                   DB
 	conductorURL         string
-	mongoAddress         string
-	mongoUsername        string
-	mongoPassword        string
-	dbName               = "admin"
-	checkIntervalSeconds = 10
+	checkIntervalSeconds int
 )
 
 //Schedule struct data
@@ -82,16 +79,25 @@ func (schedule Schedule) ValidateAndUpdate() error {
 	return nil
 }
 
-func main() {
-	logLevel := flag.String("loglevel", "debug", "debug, info, warning, error")
-	checkInterval0 := flag.Int("check-interval", 10, "Workflow check interval in seconds")
-	conductorURL0 := flag.String("conductor-api-url", "", "Conductor API URL. Example: http://conductor-server:8080/api")
-	mongoAddress0 := flag.String("mongo-address", "", "MongoDB address. Example: 'mongo', or 'mongdb://mongo1:1234/db1,mongo2:1234/db1")
-	mongoUsername0 := flag.String("mongo-username", "root", "MongoDB username")
-	mongoPassword0 := flag.String("mongo-password", "root", "MongoDB password")
-	flag.Parse()
+func GetEnvOrDefault(key string, defaultValue string) string {
+	found, ok := os.LookupEnv(key)
+	if !ok {
+		return defaultValue
+	}
+	return found
+}
 
-	switch *logLevel {
+func main() {
+	logLevel := GetEnvOrDefault("LOG_LEVEL", "INFO")
+	var err error
+	checkIntervalSecondsString := GetEnvOrDefault("CHECK_INTERVAL_SECONDS", "10")
+	checkIntervalSeconds, err = strconv.Atoi(checkIntervalSecondsString)
+	if err != nil {
+		logrus.Fatalf("Canot parse CHECK_INTERVAL_SECONDS value '%s'. Error: %v", checkIntervalSecondsString, err)
+	}
+	conductorURL = GetEnvOrDefault("CONDUCTOR_API_URL", "http://conductor-server:8080/api")
+
+	switch strings.ToLower(logLevel) {
 	case "debug":
 		logrus.SetLevel(logrus.DebugLevel)
 		break
@@ -105,30 +111,9 @@ func main() {
 		logrus.SetLevel(logrus.InfoLevel)
 	}
 
-	conductorURL = *conductorURL0
-	if conductorURL == "" {
-		logrus.Errorf("'conductor-api-url' parameter is required")
-		os.Exit(1)
-	}
+	logrus.Info("Starting Schellar with CONDUCTOR_API_URL=%s, CHECK_INTERVAL_SECONDS=%d", conductorURL, checkIntervalSeconds)
 
-	mongoAddress = *mongoAddress0
-	if mongoAddress == "" {
-		logrus.Errorf("'mongo-address' parameter is required")
-		os.Exit(1)
-	}
-
-	mongoUsername = *mongoUsername0
-	mongoPassword = *mongoPassword0
-
-	checkIntervalSeconds = *checkInterval0
-
-	logrus.Info("====Starting Schellar====")
-
-	var err error
-	db, err = InitDB()
-	if err != nil {
-		logrus.Fatalf("Couldn't init database: %v", err)
-	}
+	db = InitDB()
 
 	err = startScheduler()
 	if err != nil {
