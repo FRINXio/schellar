@@ -42,7 +42,7 @@ func (db PostgresDB) queryAll(sql string, args ...interface{}) ([]ifc.Schedule, 
 			Enabled             bool
 			Status              string
 			WorkflowName        string
-			WorkflowVersion     int
+			WorkflowVersion     string
 			WorkflowContext     map[string]interface{}
 			CronString          string
 			ParallelRuns        bool
@@ -96,13 +96,15 @@ func (db PostgresDB) FindAllByEnabled(enabled bool) ([]ifc.Schedule, error) {
 }
 
 func (db PostgresDB) FindByName(scheduleName string) (*ifc.Schedule, error) {
-	schedules, err := db.queryAll("SELECT "+rowNames+" FROM schedule WHERE name=$1",
+	schedules, err := db.queryAll("SELECT "+rowNames+" FROM schedule WHERE schedule_name=$1",
 		scheduleName)
 	if err != nil {
 		return nil, err
 	}
 	if len(schedules) == 1 {
 		return &schedules[0], nil
+	} else if len(schedules) == 0 {
+		return nil, nil
 	}
 	return nil, errors.New(
 		fmt.Sprintf(

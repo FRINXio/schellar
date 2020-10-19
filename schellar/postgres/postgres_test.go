@@ -32,7 +32,7 @@ func makeSchedule(now time.Time) ifc.Schedule {
 		Enabled:             true,
 		Status:              "Status",
 		WorkflowName:        "WorkflowName",
-		WorkflowVersion:     1,
+		WorkflowVersion:     "1",
 		WorkflowContext:     nil,
 		CronString:          "CronString",
 		ParallelRuns:        false,
@@ -66,21 +66,55 @@ func TestCRUDIntegration(t *testing.T) {
 					schedule.WorkflowContext = workflowContext
 					schedule.TaskToDomain = taskToDomain
 					err := db.Insert(schedule)
-
 					if err != nil {
 						t.Fatalf("Cannot insert. Err=%v", err)
 					}
+					// findall
 					schedules := expectTableSize(db, 1, "after insert", t)
 					actual := schedules[0]
-					// check equality
 					if !reflect.DeepEqual(schedule, actual) {
 						t.Fatalf("Expected equality between inserted: \n%v and selected \n%v", schedule, actual)
 					}
+					// find by name
+					found, err := db.FindByName(schedule.Name)
+					if err != nil {
+						t.Fatalf("Cannot find by name. Err=%v", err)
+					}
+					if !reflect.DeepEqual(schedule, *found) {
+						t.Fatalf("Expected equality between inserted: \n%v and found by name \n%v", schedule, found)
+					}
+
 					defer db.RemoveByName(schedule.Name)
 				})
 		}
 	}
 	expectTableSize(db, 0, "after test", t)
+}
+
+func TestFindByNameIntegration(t *testing.T) {
+	db := initIntegration(t)
+	now := time.Now().Truncate(time.Millisecond)
+
+	found, err := db.FindByName("404")
+	if err != nil {
+		t.Fatalf("Cannot FindByName: %v", err)
+	}
+	if found != nil {
+		t.Fatalf("Unexpected FindByName: %v", found)
+	}
+	schedule := makeSchedule(now)
+	err = db.Insert(schedule)
+	if err != nil {
+		t.Fatalf("Cannot insert: %v", err)
+	}
+	defer db.RemoveByName(schedule.Name)
+	found, err = db.FindByName(schedule.Name)
+	if err != nil {
+		t.Fatalf("Unexpected FindByName: %v", err)
+	}
+	if found == nil {
+		t.Fatalf("Not found after insert")
+	}
 }
 
 func TestUpdateStatusIntegration(t *testing.T) {
@@ -89,14 +123,14 @@ func TestUpdateStatusIntegration(t *testing.T) {
 	schedule := makeSchedule(now)
 	err := db.Insert(schedule)
 	if err != nil {
-		t.Fatalf("Cannt insert: %v", err)
+		t.Fatalf("Cannot insert: %v", err)
 	}
 	defer db.RemoveByName(schedule.Name)
 
 	schedule.Status = "COMPLETED"
 	err = db.UpdateStatus(schedule.Name, schedule.Status)
 	if err != nil {
-		t.Fatalf("Cannt update: %v", err)
+		t.Fatalf("Cannot update: %v", err)
 	}
 	schedules := expectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
@@ -112,7 +146,7 @@ func TestUpdateStatusAndWorkflowContextIntegration(t *testing.T) {
 	schedule := makeSchedule(now)
 	err := db.Insert(schedule)
 	if err != nil {
-		t.Fatalf("Cannt insert: %v", err)
+		t.Fatalf("Cannot insert: %v", err)
 	}
 	defer db.RemoveByName(schedule.Name)
 
@@ -120,7 +154,7 @@ func TestUpdateStatusAndWorkflowContextIntegration(t *testing.T) {
 	schedule.WorkflowContext = map[string]interface{}{"key": map[string]interface{}{"k": "v"}}
 	err = db.UpdateStatusAndWorkflowContext(schedule)
 	if err != nil {
-		t.Fatalf("Cannt update: %v", err)
+		t.Fatalf("Cannot update: %v", err)
 	}
 	schedules := expectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
@@ -136,14 +170,14 @@ func TestUpdateIntegration(t *testing.T) {
 	schedule := makeSchedule(now)
 	err := db.Insert(schedule)
 	if err != nil {
-		t.Fatalf("Cannt insert: %v", err)
+		t.Fatalf("Cannot insert: %v", err)
 	}
 	defer db.RemoveByName(schedule.Name)
 
 	schedule.FromDate = &now
 	err = db.Update(schedule)
 	if err != nil {
-		t.Fatalf("Cannt update: %v", err)
+		t.Fatalf("Cannot update: %v", err)
 	}
 	schedules := expectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
