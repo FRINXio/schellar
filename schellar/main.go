@@ -42,7 +42,12 @@ func main() {
 
 	logrus.Info("Starting Schellar with CONDUCTOR_API_URL=%s, CHECK_INTERVAL_SECONDS=%d", conductorURL, checkIntervalSeconds)
 
-	db = mongo.InitDB()
+	backend := ifc.GetEnvOrDefault("BACKEND", "mongo")
+	if backend == "mongo" {
+		db = mongo.InitDB()
+	} else {
+		logrus.Fatalf("Cannot initialize backend '%s'", backend)
+	}
 
 	err = startScheduler()
 	if err != nil {

@@ -38,22 +38,12 @@ func InitDB() ifc.DB {
 	}
 
 	var mongoSession *mgo.Session
-	for i := 0; i < 30; i++ {
-		ms, err := mgo.DialWithInfo(mongoDBDialInfo)
-		if err != nil {
-			logrus.Infof("Couldn't connect to mongoDB. err=%s", err)
-			time.Sleep(1 * time.Second)
-			logrus.Infof("Retrying...")
-			continue
-		}
-		mongoSession = ms
-		logrus.Infof("Connected to MongoDB successfully")
-		break
+	ms, err := mgo.DialWithInfo(mongoDBDialInfo)
+	if err != nil {
+		logrus.Fatalf("Couldn't connect to MongoDB. err=%s", err)
 	}
-
-	if mongoSession == nil {
-		logrus.Fatalf("Couldn't connect to MongoDB")
-	}
+	mongoSession = ms
+	logrus.Infof("Connected to MongoDB successfully")
 	return MongoDB{mongoSession, dbName}
 }
 
