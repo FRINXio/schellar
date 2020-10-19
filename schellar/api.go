@@ -38,34 +38,37 @@ func createSchedule(w http.ResponseWriter, r *http.Request) {
 	var schedule ifc.Schedule
 	err := decoder.Decode(&schedule)
 	if err != nil {
-		writeResponse(w, http.StatusBadRequest, fmt.Sprintf("Error handling post results. err=%s", err.Error()))
+		logrus.Debugf("Error creating schedule. err=%v", err)
+		writeResponse(w, http.StatusBadRequest, "Error creating schedule")
 		return
 	}
 	err = schedule.ValidateAndUpdate()
 	if err != nil {
-		writeResponse(w, http.StatusBadRequest, fmt.Sprintf("Error handling post results. err=%s", err.Error()))
+		logrus.Debugf("Error validating schedule. err=%v", err)
+		writeResponse(w, http.StatusBadRequest, "Error validating schedule")
 		return
 	}
 
 	//check duplicate schedule
-	found, err1 := db.FindByName(schedule.Name)
-	if err1 != nil {
+	found, err := db.FindByName(schedule.Name)
+	if err != nil {
+		logrus.Debugf("Error checking for existing schedule name. err=%v", err)
 		writeResponse(w, http.StatusInternalServerError, "Error checking for existing schedule name")
-		logrus.Errorf("Error checking for existing schedule name. err=%s", err1)
 		return
 	}
 	if found != nil {
-		writeResponse(w, http.StatusBadRequest, fmt.Sprintf("Duplicate schedule name '%s'", schedule.Name))
+		logrus.Debugf("Duplicate schedule name '%s'", schedule.Name)
+		writeResponse(w, http.StatusBadRequest, "Duplicate schedule name")
 		return
 	}
 
 	logrus.Debugf("Saving schedule %s for workflow %s", schedule.Name, schedule.WorkflowName)
 	logrus.Debugf("schedule: %v", schedule)
 
-	err0 := db.Insert(schedule)
-	if err0 != nil {
+	err = db.Insert(schedule)
+	if err != nil {
+		logrus.Debugf("Error storing schedule to the database. err=%s", err)
 		writeResponse(w, http.StatusInternalServerError, "Error storing schedule.")
-		logrus.Errorf("Error storing schedule to the database. err=%s", err0)
 		return
 	}
 	prepareTimers()
@@ -84,35 +87,39 @@ func updateSchedule(w http.ResponseWriter, r *http.Request) {
 	var schedule ifc.Schedule
 	err := decoder.Decode(&schedule)
 	if err != nil {
-		writeResponse(w, http.StatusBadRequest, fmt.Sprintf("Error handling post results. err=%s", err.Error()))
+		logrus.Debugf("Error updating schedule. err=%v", err)
+		writeResponse(w, http.StatusBadRequest, "Error updating schedule.")
 		return
 	}
 	err = schedule.ValidateAndUpdate()
 	if err != nil {
-		writeResponse(w, http.StatusBadRequest, fmt.Sprintf("Error handling post results. err=%s", err.Error()))
+		logrus.Debugf("Error validating updated schedule. err=%v", err)
+		writeResponse(w, http.StatusBadRequest, "Error validating updated schedule.")
 		return
 	}
 
 	logrus.Debugf("Updating schedule with %v", schedule)
-	found, err1 := db.FindByName(name)
-	if err1 != nil {
-		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error updating schedule"))
-		logrus.Errorf("Couldn't find schedule name %s. err=%s", name, err1)
+	found, err := db.FindByName(name)
+	if err != nil {
+		logrus.Debugf("Error finding schedule by name '%s'. err=%s", name, err)
+		writeResponse(w, http.StatusInternalServerError, "Error finding schedule")
 		return
 	}
 	if found == nil {
-		writeResponse(w, http.StatusNotFound, fmt.Sprintf("Couldn't find schedule %s", name))
+		logrus.Debugf("Schedule not found with name '%s'", name)
+		writeResponse(w, http.StatusNotFound, "Schedule not found")
 		return
 	}
 
 	err = db.Update(schedule)
 	if err != nil {
+		logrus.Debugf("Error updating schedule '%s'. err=%v", name, err)
 		writeResponse(w, http.StatusInternalServerError, "Error updating schedule")
-		logrus.Errorf("Error updating schedule %s. err=%s", name, err)
 		return
 	}
 	prepareTimers()
 	writeResponse(w, http.StatusOK, fmt.Sprintf("Schedule updated successfully"))
+	logrus.Debugf("Schedule '%s' updated successfuly", name)
 }
 
 func listSchedules(w http.ResponseWriter, r *http.Request) {
@@ -120,15 +127,17 @@ func listSchedules(w http.ResponseWriter, r *http.Request) {
 
 	schedules, err := db.FindAll()
 	if err != nil {
-		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error listing schedules. err=%s", err.Error()))
+		logrus.Debugf("Error listing schedules. err=%v", err)
+		writeResponse(w, http.StatusInternalServerError, "Error listing schedules")
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	logrus.Debugf("Schedules=%v", schedules)
-	b, err0 := json.Marshal(schedules)
-	if err0 != nil {
-		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error listing schedules. err=%s", err.Error()))
+	b, err := json.Marshal(schedules)
+	if err != nil {
+		logrus.Debugf("Error serializing schedules. err=%v", err)
+		writeResponse(w, http.StatusInternalServerError, "Error listing schedules")
 		return
 	}
 	w.Write(b)
@@ -141,14 +150,16 @@ func getSchedule(w http.ResponseWriter, r *http.Request) {
 
 	schedule, err := db.FindByName(name)
 	if err != nil {
-		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error getting schedule. err=%s", err.Error()))
+		logrus.Debugf("Error getting schedules. err=%v", err)
+		writeResponse(w, http.StatusInternalServerError, "Error getting schedule")
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	b, err0 := json.Marshal(schedule)
 	if err0 != nil {
-		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error getting schedule. err=%s", err.Error()))
+		logrus.Debugf("Error serializing schedules. err=%v", err)
+		writeResponse(w, http.StatusInternalServerError, "Error getting schedule. err=%s")
 		return
 	}
 	w.Write(b)
@@ -161,7 +172,8 @@ func deleteSchedule(w http.ResponseWriter, r *http.Request) {
 
 	err := db.RemoveByName(name)
 	if err != nil {
-		writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Error deleting schedule. err=%s", err.Error()))
+		logrus.Debugf("Error deleting schedule. err=%v", err)
+		writeResponse(w, http.StatusInternalServerError, "Error deleting schedule")
 		return
 	}
 	prepareTimers()
