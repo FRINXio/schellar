@@ -14,7 +14,7 @@ type Schedule struct {
 	Enabled             bool                   `json:"enabled,omitempty" bson:"enabled"`
 	Status              string                 `json:"status,omitempty" bson:"status"`
 	WorkflowName        string                 `json:"workflowName,omitempty" bson:"workflowName"`
-	WorkflowVersion     string                 `json:"workflowVersion,omitempty" bson:"workflowVersion"`
+	WorkflowVersion     int                    `json:"workflowVersion,omitempty" bson:"workflowVersion"`
 	WorkflowContext     map[string]interface{} `json:"workflowContext,omitempty" bson:"workflowContext"`
 	CronString          string                 `json:"cronString,omitempty" bson:"cronString"`
 	ParallelRuns        bool                   `json:"parallelRuns,omitempty" bson:"parallelRuns"`
@@ -42,9 +42,6 @@ func (schedule Schedule) ValidateAndUpdate() error {
 	_, err := cron.ParseStandard(schedule.CronString)
 	if err != nil {
 		return errors.Wrap(err, "'cronString' is invalid")
-	}
-	if schedule.WorkflowVersion == "" {
-		schedule.WorkflowVersion = "1"
 	}
 	if schedule.CheckWarningSeconds == 0 {
 		schedule.CheckWarningSeconds = 3600

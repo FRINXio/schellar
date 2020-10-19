@@ -6,6 +6,7 @@ import (
 
 	"github.com/frinx/schellar/ifc"
 	"github.com/frinx/schellar/mongo"
+	"github.com/frinx/schellar/postgres"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/sirupsen/logrus"
 )
@@ -40,11 +41,13 @@ func main() {
 		logrus.SetLevel(logrus.InfoLevel)
 	}
 
-	logrus.Info("Starting Schellar with CONDUCTOR_API_URL=%s, CHECK_INTERVAL_SECONDS=%d", conductorURL, checkIntervalSeconds)
+	logrus.Infof("Starting Schellar with CONDUCTOR_API_URL=%s, CHECK_INTERVAL_SECONDS=%d", conductorURL, checkIntervalSeconds)
 
 	backend := ifc.GetEnvOrDefault("BACKEND", "mongo")
 	if backend == "mongo" {
 		db = mongo.InitDB()
+	} else if backend == "postgres" {
+		db = postgres.InitDB()
 	} else {
 		logrus.Fatalf("Cannot initialize backend '%s'", backend)
 	}
