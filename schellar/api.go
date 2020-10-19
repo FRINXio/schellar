@@ -150,14 +150,19 @@ func getSchedule(w http.ResponseWriter, r *http.Request) {
 
 	schedule, err := db.FindByName(name)
 	if err != nil {
-		logrus.Debugf("Error getting schedules. err=%v", err)
+		logrus.Debugf("Error getting schedule with name '%s'. err=%v", name, err)
 		writeResponse(w, http.StatusInternalServerError, "Error getting schedule")
 		return
 	}
 
+	if schedule == nil {
+		logrus.Debugf("Error getting schedule with name '%s'", name)
+		writeResponse(w, http.StatusNotFound, "Not found")
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	b, err0 := json.Marshal(schedule)
-	if err0 != nil {
+	b, err := json.Marshal(schedule)
+	if err != nil {
 		logrus.Debugf("Error serializing schedules. err=%v", err)
 		writeResponse(w, http.StatusInternalServerError, "Error getting schedule. err=%s")
 		return

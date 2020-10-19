@@ -14,7 +14,7 @@ type Schedule struct {
 	Enabled             bool                   `json:"enabled,omitempty" bson:"enabled"`
 	Status              string                 `json:"status,omitempty" bson:"status"`
 	WorkflowName        string                 `json:"workflowName,omitempty" bson:"workflowName"`
-	WorkflowVersion     int                    `json:"workflowVersion,omitempty" bson:"workflowVersion"`
+	WorkflowVersion     string                 `json:"workflowVersion,omitempty" bson:"workflowVersion"`
 	WorkflowContext     map[string]interface{} `json:"workflowContext,omitempty" bson:"workflowContext"`
 	CronString          string                 `json:"cronString,omitempty" bson:"cronString"`
 	ParallelRuns        bool                   `json:"parallelRuns,omitempty" bson:"parallelRuns"`
