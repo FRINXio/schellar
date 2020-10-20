@@ -11,24 +11,56 @@ import (
 	"github.com/frinx/schellar/ifc"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/tern/migrate"
 	"github.com/sirupsen/logrus"
 )
 
 type PostgresDB struct {
-	connection pgxpool.Pool
+	connectionPool pgxpool.Pool
+}
+
+func runMigrations(connectionPool pgxpool.Pool) {
+	conn, err := connectionPool.Acquire(context.Background())
+	if err != nil {
+		logrus.Fatalf("Unable to acquire connection to database: %v", err)
+	}
+	defer conn.Release()
+	m, err := migrate.NewMigrator(context.Background(), conn.Conn(), "schema_version")
+	if err != nil {
+		logrus.Fatalf("Unable to create migrator: %v", err)
+	}
+	err = m.LoadMigrations("migrations")
+	if err != nil {
+		logrus.Fatalf("Cannot find 'migrations': %v", err)
+	}
+	currentVersion, err := m.GetCurrentVersion(context.Background())
+	if err != nil {
+		logrus.Fatalf("Cannot find current migration version: %v", err)
+	}
+	if len(m.Migrations) == 0 {
+		logrus.Warn("No migrations found")
+	}
+	logrus.Debugf("DB Migrations: current version %d, out of %d",
+		currentVersion, len(m.Migrations))
+	// actually run migrations
+	err = m.Migrate(context.Background())
+	if err != nil {
+		logrus.Fatalf("Cannot migrate: %v", err)
+	}
 }
 
 func InitDB() PostgresDB {
 	var err error
-	connection, err := pgxpool.Connect(context.Background(), os.Getenv("POSTGRES_DATABASE_URL"))
+	connectionPool, err := pgxpool.Connect(context.Background(), os.Getenv("POSTGRES_DATABASE_URL"))
 	if err != nil {
 		logrus.Fatalf("Unable to connection to database: %v", err)
 	}
-	return PostgresDB{*connection}
+	runMigrations(*connectionPool)
+	return PostgresDB{*connectionPool}
 }
 
 func (db PostgresDB) queryAll(sql string, args ...interface{}) ([]ifc.Schedule, error) {
-	rows, err := db.connection.Query(context.Background(), sql, args...)
+	rows, err := db.connectionPool.Query(context.Background(), sql, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +149,7 @@ func (db PostgresDB) FindByStatus(status string) ([]ifc.Schedule, error) {
 }
 
 func (db PostgresDB) Insert(schedule ifc.Schedule) error {
-	_, err := db.connection.Exec(context.Background(),
+	_, err := db.connectionPool.Exec(context.Background(),
 		"INSERT INTO schedule("+rowNames+") VALUES "+sqlParamsRange(14),
 		schedule.Name,
 		schedule.Enabled,
@@ -138,21 +170,21 @@ func (db PostgresDB) Insert(schedule ifc.Schedule) error {
 }
 
 func (db PostgresDB) UpdateStatus(scheduleName string, scheduleStatus string) error {
-	_, err := db.connection.Exec(context.Background(),
+	_, err := db.connectionPool.Exec(context.Background(),
 		"UPDATE schedule SET workflow_status=$2 WHERE schedule_name=$1",
 		scheduleName, scheduleStatus)
 	return err
 }
 
 func (db PostgresDB) UpdateStatusAndWorkflowContext(schedule ifc.Schedule) error {
-	_, err := db.connection.Exec(context.Background(),
+	_, err := db.connectionPool.Exec(context.Background(),
 		"UPDATE schedule SET workflow_status=$2, workflow_context=$3 WHERE schedule_name=$1",
 		schedule.Name, schedule.Status, schedule.WorkflowContext)
 	return err
 }
 
 func (db PostgresDB) Update(schedule ifc.Schedule) error {
-	_, err := db.connection.Exec(context.Background(),
+	_, err := db.connectionPool.Exec(context.Background(),
 		`UPDATE schedule SET
 			is_enabled=$2,
 			workflow_status=$3,
@@ -187,7 +219,7 @@ func (db PostgresDB) Update(schedule ifc.Schedule) error {
 }
 
 func (db PostgresDB) RemoveByName(scheduleName string) error {
-	_, err := db.connection.Exec(context.Background(),
+	_, err := db.connectionPool.Exec(context.Background(),
 		"DELETE FROM schedule WHERE schedule_name=$1", scheduleName)
 	return err
 }
