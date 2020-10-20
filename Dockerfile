@@ -9,7 +9,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflag
 
 FROM alpine
 
-COPY --from=builder /go/bin/schellar /bin/
-ADD startup.sh /
+WORKDIR /schellar
 
-CMD ["sh","startup.sh"]⏎
+COPY --from=builder /go/bin/schellar .
+ADD schellar/migrations/ ./migrations
+
+CMD ["./schellar"]

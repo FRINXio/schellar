@@ -29,7 +29,10 @@ func runMigrations(connectionPool pgxpool.Pool) {
 	if err != nil {
 		logrus.Fatalf("Unable to create migrator: %v", err)
 	}
-	err = m.LoadMigrations("migrations")
+
+	migrationsDir := ifc.GetEnvOrDefault("POSTGRES_MIGRATIONS_DIR", "migrations")
+	logrus.Debugf("Running migrations in '%s'", migrationsDir)
+	err = m.LoadMigrations(migrationsDir)
 	if err != nil {
 		logrus.Fatalf("Cannot find 'migrations': %v", err)
 	}
@@ -40,7 +43,7 @@ func runMigrations(connectionPool pgxpool.Pool) {
 	if len(m.Migrations) == 0 {
 		logrus.Warn("No migrations found")
 	}
-	logrus.Debugf("DB Migrations: current version %d, out of %d",
+	logrus.Infof("DB Migrations: current version %d, out of %d",
 		currentVersion, len(m.Migrations))
 	// actually run migrations
 	err = m.Migrate(context.Background())
