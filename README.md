@@ -186,17 +186,18 @@ curl -X PUT \
 ```
 
 ## ENV configurations
+Schellar is configured using [GoDotEnv](https://github.com/joho/godotenv).
 
-* CONDUCTOR_API_URL - base URL for accessing the target Conductor API
+See [.env-SAMPLE](schellar/.env-SAMPLE) file for sample configuration.
 
-* CHECK_INTERVAL_SECONDS - Minimum time between running workflows checks
+# DB migrations
 
-* MONGO_ADDRESS - Mongodb address. Supports full URLs (like "mongo://user1:pass1@mymongo:8372/mydb") or simple form (like "mongo")
-
-* MONGO_DB - mongodb database name
-
-* MONGO_USERNAME - mongodb username
-
-* MONGO_PASSWORD - mongodb password
-
-
+Schellar uses [tern](https://github.com/jackc/tern) for DB migrations.
+They run automatically when schellar starts. It is possible to use a
+standalone cli tool to manage migratinos as well:
+```sh
+go get -u github.com/jackc/tern
+# execute migrations
+cd schellar/migrations
+tern migrate
+```
