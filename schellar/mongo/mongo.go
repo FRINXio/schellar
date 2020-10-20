@@ -1,6 +1,8 @@
 package mongo
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -71,10 +73,22 @@ func (db MongoDB) FindByName(scheduleName string) (*ifc.Schedule, error) {
 	sc := db.mongoSession.Copy()
 	defer sc.Close()
 
-	var schedule ifc.Schedule
 	st := sc.DB(db.dbName).C("schedules")
-	err := st.Find(map[string]interface{}{"name": scheduleName}).One(&schedule)
-	return &schedule, err
+	schedules := make([]ifc.Schedule, 0)
+	err := st.Find(map[string]interface{}{"name": scheduleName}).All(&schedules)
+	if err != nil {
+		return nil, err
+	}
+	if len(schedules) == 1 {
+		return &schedules[0], nil
+	} else if len(schedules) == 0 {
+		return nil, nil
+	}
+	return nil, errors.New(
+		fmt.Sprintf(
+			"Unexpected result for FindByName('%s'): Found %d items",
+			scheduleName, len(schedules),
+		))
 }
 
 func (db MongoDB) FindByStatus(status string) ([]ifc.Schedule, error) {
