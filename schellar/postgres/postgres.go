@@ -10,18 +10,17 @@ import (
 
 	"github.com/frinx/schellar/ifc"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sirupsen/logrus"
 )
 
 type PostgresDB struct {
-	// TODO: pool
-	connection pgx.Conn
+	connection pgxpool.Pool
 }
 
 func InitDB() PostgresDB {
 	var err error
-	connection, err := pgx.Connect(context.Background(), os.Getenv("POSTGRES_DATABASE_URL"))
+	connection, err := pgxpool.Connect(context.Background(), os.Getenv("POSTGRES_DATABASE_URL"))
 	if err != nil {
 		logrus.Fatalf("Unable to connection to database: %v", err)
 	}
