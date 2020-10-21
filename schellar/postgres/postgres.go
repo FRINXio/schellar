@@ -69,7 +69,7 @@ func (db PostgresDB) queryAll(sql string, args ...interface{}) ([]ifc.Schedule, 
 	}
 	defer rows.Close()
 
-	schedules := make([]ifc.Schedule, 0, len(rows.FieldDescriptions()))
+	schedules := make([]ifc.Schedule, 0)
 	for rows.Next() {
 		var (
 			ScheduleName        string
