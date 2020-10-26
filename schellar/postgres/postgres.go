@@ -54,7 +54,9 @@ func runMigrations(connectionPool pgxpool.Pool) {
 
 func InitDB() PostgresDB {
 	var err error
-	connectionPool, err := pgxpool.Connect(context.Background(), os.Getenv("POSTGRES_DATABASE_URL"))
+	url := os.Getenv("POSTGRES_DATABASE_URL")
+	logrus.Debugf("Connecting to url: '%s'", url)
+	connectionPool, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		logrus.Fatalf("Unable to connection to database: %v", err)
 	}
@@ -94,6 +96,9 @@ func (db PostgresDB) queryAll(sql string, args ...interface{}) ([]ifc.Schedule, 
 		)
 		if err != nil {
 			return nil, err
+		}
+		if WorkflowContext == nil {
+			WorkflowContext = make(map[string]interface{})
 		}
 		schedule := ifc.Schedule{ScheduleName, Enabled, Status, WorkflowName, WorkflowVersion,
 			WorkflowContext, CronString, ParallelRuns, CheckWarningSeconds,

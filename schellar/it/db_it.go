@@ -1,6 +1,7 @@
 package it
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -49,6 +50,18 @@ func AllIntegration(t *testing.T, dbGetter func(*testing.T) ifc.DB) {
 	})
 }
 
+func assertEquals(t *testing.T, expected ifc.Schedule, actual ifc.Schedule, hint string) {
+	if !reflect.DeepEqual(expected, actual) {
+		expectedJSON, err1 := json.Marshal(expected)
+		actualJSON, err2 := json.Marshal(actual)
+		if err1 != nil || err2 != nil {
+			t.Fatalf("%s Expected vs Actual:\n%v\n%v", hint, expected, actual)
+		} else {
+			t.Fatalf("%s Expected vs Actual:\n%v\n%v", hint, string(expectedJSON), string(actualJSON))
+		}
+	}
+}
+
 func testCRUD(t *testing.T, db ifc.DB, schedule ifc.Schedule) {
 	// table should be empty
 	ExpectTableSize(db, 0, "before test", t)
@@ -62,17 +75,17 @@ func testCRUD(t *testing.T, db ifc.DB, schedule ifc.Schedule) {
 	// findall
 	schedules := ExpectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
-	if !reflect.DeepEqual(schedule, actual) {
-		t.Fatalf("Expected equality between inserted: \n%v and selected \n%v", schedule, actual)
+	if schedule.WorkflowContext == nil {
+		// selected WorkflowContext is never null
+		schedule.WorkflowContext = make(map[string]interface{})
 	}
+	assertEquals(t, schedule, actual, "Insert error")
 	// find by name
 	found, err := db.FindByName(schedule.Name)
 	if err != nil {
 		t.Fatalf("Cannot find by name. Err=%v", err)
 	}
-	if !reflect.DeepEqual(schedule, *found) {
-		t.Fatalf("Expected equality between inserted: \n%v and found by name \n%v", schedule, found)
-	}
+	assertEquals(t, schedule, *found, "FindByName error")
 }
 
 func CRUDIntegration(t *testing.T, dbGetter func(*testing.T) ifc.DB) {
@@ -150,10 +163,10 @@ func UpdateStatusIntegration(t *testing.T, dbGetter func(*testing.T) ifc.DB) {
 	}
 	schedules := ExpectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
+	// selected WorkflowContext is never null
+	schedule.WorkflowContext = make(map[string]interface{})
 	// check equality
-	if !reflect.DeepEqual(schedule, actual) {
-		t.Fatalf("Expected equality between inserted: \n%v and selected \n%v", schedule, actual)
-	}
+	assertEquals(t, schedule, actual, "Inserted != selected")
 }
 
 func UpdateStatusAndWorkflowContextIntegration(t *testing.T, dbGetter func(*testing.T) ifc.DB) {
@@ -175,9 +188,7 @@ func UpdateStatusAndWorkflowContextIntegration(t *testing.T, dbGetter func(*test
 	schedules := ExpectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
 	// check equality
-	if !reflect.DeepEqual(schedule, actual) {
-		t.Fatalf("Expected equality between inserted: \n%v and selected \n%v", schedule, actual)
-	}
+	assertEquals(t, schedule, actual, "Inserted != selected")
 }
 
 func UpdateIntegration(t *testing.T, dbGetter func(*testing.T) ifc.DB) {
@@ -196,8 +207,8 @@ func UpdateIntegration(t *testing.T, dbGetter func(*testing.T) ifc.DB) {
 	}
 	schedules := ExpectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
+	// selected WorkflowContext is never null
+	schedule.WorkflowContext = make(map[string]interface{})
 	// check equality
-	if !reflect.DeepEqual(schedule, actual) {
-		t.Fatalf("Expected equality between inserted: \n%v and selected \n%v", schedule, actual)
-	}
+	assertEquals(t, schedule, actual, "Inserted != selected")
 }

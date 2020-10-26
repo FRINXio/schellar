@@ -190,7 +190,7 @@ Schellar is configured using [GoDotEnv](https://github.com/joho/godotenv).
 
 See [.env-SAMPLE](schellar/.env-SAMPLE) file for sample configuration.
 
-# DB migrations
+## DB migrations
 
 Schellar uses [tern](https://github.com/jackc/tern) for DB migrations.
 They run automatically when schellar starts. It is possible to use a
@@ -200,4 +200,18 @@ go get -u github.com/jackc/tern
 # execute migrations
 cd schellar/migrations
 tern migrate --version-table schellar_schema_version
+```
+
+## Testing
+To run tests, first go to `schellar` directory.
+To run unit tests:
+```sh
+go test -v -short ./...
+```
+To run integration tests:
+```sh
+docker-compose -f docker-compose.test.yml up -d
+export POSTGRES_DATABASE_URL="host=127.0.0.1 port=6432 user=postgres password=postgres database=schellar_test"
+export POSTGRES_MIGRATIONS_DIR="$(pwd)/migrations"
+go test -run Integration ./...
 ```
