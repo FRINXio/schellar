@@ -199,5 +199,5 @@ standalone cli tool to manage migratinos as well:
 go get -u github.com/jackc/tern
 # execute migrations
 cd schellar/migrations
-tern migrate
+tern migrate --version-table schellar_schema_version
 ```
