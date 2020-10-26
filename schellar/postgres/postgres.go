@@ -25,7 +25,7 @@ func runMigrations(connectionPool pgxpool.Pool) {
 		logrus.Fatalf("Unable to acquire connection to database: %v", err)
 	}
 	defer conn.Release()
-	m, err := migrate.NewMigrator(context.Background(), conn.Conn(), "schema_version")
+	m, err := migrate.NewMigrator(context.Background(), conn.Conn(), "schellar_schema_version")
 	if err != nil {
 		logrus.Fatalf("Unable to create migrator: %v", err)
 	}
