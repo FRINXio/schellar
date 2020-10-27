@@ -13,4 +13,8 @@ sleep 5
 export BACKEND="postgres"
 export POSTGRES_DATABASE_URL="host=127.0.0.1 port=6432 user=postgres password=postgres database=schellar_test"
 export POSTGRES_MIGRATIONS_DIR="$(pwd)/migrations"
+export MONGO_ADDRESS=127.0.0.1
+export MONGO_USERNAME=root
+export MONGO_PASSWORD=root
+export MONGO_DB=admin
 go test -run Integration ./...

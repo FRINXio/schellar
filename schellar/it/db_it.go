@@ -76,8 +76,12 @@ func testCRUD(t *testing.T, db ifc.DB, schedule ifc.Schedule) {
 	schedules := ExpectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
 	if schedule.WorkflowContext == nil {
-		// selected WorkflowContext is never null
+		// selected WorkflowContext is never nil
 		schedule.WorkflowContext = make(map[string]interface{})
+	}
+	if schedule.TaskToDomain == nil {
+		// selected TaskToDomain is never nil
+		schedule.TaskToDomain = make(map[string]string)
 	}
 	assertEquals(t, schedule, actual, "Insert error")
 	// find by name
@@ -163,8 +167,11 @@ func UpdateStatusIntegration(t *testing.T, dbGetter func(*testing.T) ifc.DB) {
 	}
 	schedules := ExpectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
-	// selected WorkflowContext is never null
+	// selected WorkflowContext is never nil
 	schedule.WorkflowContext = make(map[string]interface{})
+	// selected TaskToDomain is never nil
+	schedule.TaskToDomain = make(map[string]string)
+
 	// check equality
 	assertEquals(t, schedule, actual, "Inserted != selected")
 }
@@ -187,6 +194,9 @@ func UpdateStatusAndWorkflowContextIntegration(t *testing.T, dbGetter func(*test
 	}
 	schedules := ExpectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
+	// selected TaskToDomain is never nil
+	schedule.TaskToDomain = make(map[string]string)
+
 	// check equality
 	assertEquals(t, schedule, actual, "Inserted != selected")
 }
@@ -207,8 +217,11 @@ func UpdateIntegration(t *testing.T, dbGetter func(*testing.T) ifc.DB) {
 	}
 	schedules := ExpectTableSize(db, 1, "after insert", t)
 	actual := schedules[0]
-	// selected WorkflowContext is never null
+	// selected WorkflowContext is never nil
 	schedule.WorkflowContext = make(map[string]interface{})
+	// selected TaskToDomain is never nil
+	schedule.TaskToDomain = make(map[string]string)
+
 	// check equality
 	assertEquals(t, schedule, actual, "Inserted != selected")
 }

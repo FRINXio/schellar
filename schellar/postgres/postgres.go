@@ -100,6 +100,9 @@ func (db PostgresDB) queryAll(sql string, args ...interface{}) ([]ifc.Schedule, 
 		if WorkflowContext == nil {
 			WorkflowContext = make(map[string]interface{})
 		}
+		if TaskToDomain == nil {
+			TaskToDomain = make(map[string]string)
+		}
 		schedule := ifc.Schedule{ScheduleName, Enabled, Status, WorkflowName, WorkflowVersion,
 			WorkflowContext, CronString, ParallelRuns, CheckWarningSeconds,
 			FromDate, ToDate, LastUpdate, CorrelationID, TaskToDomain}
