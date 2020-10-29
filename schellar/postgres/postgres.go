@@ -54,8 +54,20 @@ func runMigrations(connectionPool pgxpool.Pool) {
 
 func InitDB() PostgresDB {
 	var err error
-	url := os.Getenv("POSTGRES_DATABASE_URL")
-	logrus.Debugf("Connecting to url: '%s'", url)
+	url, ok := os.LookupEnv("POSTGRES_DATABASE_URL")
+	if !ok {
+		host := os.Getenv("POSTGRES_HOST")
+		port := os.Getenv("POSTGRES_PORT")
+		db := os.Getenv("POSTGRES_DB")
+		user := os.Getenv("POSTGRES_USER")
+		password := os.Getenv("POSTGRES_PASSWORD")
+		// do not log password
+		logrus.Debugf("Connecting to host=%s port=%s database=%s user=%s len(password)=%d",
+			host, port, db, user, len(password))
+		url = fmt.Sprintf("host=%s port=%s database=%s user=%s password=%s",
+			host, port, db, user, password)
+	}
+
 	connectionPool, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		logrus.Fatalf("Unable to connection to database: %v", err)
