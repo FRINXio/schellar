@@ -18,4 +18,8 @@ export POSTGRES_DB=schellar_test
 export POSTGRES_USER=postgres
 export POSTGRES_PASSWORD=postgres
 export POSTGRES_MIGRATIONS_DIR="$(pwd)/migrations"
+export MONGO_ADDRESS=127.0.0.1
+export MONGO_USERNAME=root
+export MONGO_PASSWORD=root
+export MONGO_DB=admin
 go test -run Integration ./...

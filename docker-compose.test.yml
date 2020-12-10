@@ -3,10 +3,19 @@ version: "3.8"
 services:
 
   postgres:
-    image: postgres
+    image: postgres:13
     ports:
       - 6432:5432
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: schellar_test
+
+
+  mongo:
+    image: mongo:4.1.10
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+    ports:
+      - 27017-27019:27017-27019
