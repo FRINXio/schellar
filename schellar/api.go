@@ -23,6 +23,8 @@ func startRestAPI() {
 	router.HandleFunc("/schedule/{name}", deleteSchedule).Methods("DELETE")
 	router.HandleFunc("/schedule/{name}", updateSchedule).Methods("PUT", "OPTIONS")
 	router.Handle("/metrics", promhttp.Handler())
+	router.HandleFunc("/liveness", getLiveness).Methods("GET")
+
 	listen := fmt.Sprintf("0.0.0.0:3000")
 	logrus.Infof("Listening at %s", listen)
 	err := http.ListenAndServe(listen, router)
@@ -185,6 +187,15 @@ func deleteSchedule(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, http.StatusOK, fmt.Sprintf("Deleted schedule successfully. name=%s", name))
 }
 
+func getLiveness(w http.ResponseWriter, r *http.Request) {
+	logrus.Debugf("getLiveness r r=%v", r)
+
+	if r.Method == http.MethodOptions {
+        return
+    }
+	w.Write([]byte("OK"))
+}
+
 func writeResponse(w http.ResponseWriter, statusCode int, message string) {
 	msg := make(map[string]string)
 	msg["message"] = message
@@ -196,7 +207,6 @@ func writeResponse(w http.ResponseWriter, statusCode int, message string) {
 
 func customCorsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		if r.Method == http.MethodOptions {
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Requested-With")
