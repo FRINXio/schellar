@@ -50,7 +50,7 @@ jobs:
 
       - uses: Azure/container-scan@v0
         with:
-          image-name: $IMAGE_NAME:latest
+          image-name: frinx/uniflow-schellar:latest
 
       - name: Log into docker hub
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
