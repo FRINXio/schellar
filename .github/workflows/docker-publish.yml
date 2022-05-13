@@ -16,6 +16,7 @@ on:
 env:
   # TODO: Change variable to your image's name.
   IMAGE_NAME: frinx/uniflow-schellar
+  DOCKER_CONTENT_TRUST: 1
 
 jobs:
   # Run tests.
@@ -46,6 +47,10 @@ jobs:
 
       - name: Build image
         run: docker build . --file Dockerfile --tag $IMAGE_NAME
+
+      - uses: Azure/container-scan@v0
+        with:
+          image-name: $IMAGE_NAME:latest
 
       - name: Log into docker hub
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
