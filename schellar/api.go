@@ -160,6 +160,7 @@ func getSchedule(w http.ResponseWriter, r *http.Request) {
 	if schedule == nil {
 		logrus.Debugf("Error getting schedule with name '%s'", name)
 		writeResponse(w, http.StatusNotFound, "Not found")
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -191,8 +192,8 @@ func getLiveness(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("getLiveness r r=%v", r)
 
 	if r.Method == http.MethodOptions {
-        return
-    }
+		return
+	}
 	w.Write([]byte("OK"))
 }
 
