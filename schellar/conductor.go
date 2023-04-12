@@ -91,22 +91,28 @@ func getWorkflowInstance(workflowID string) (map[string]interface{}, error) {
 func findWorkflows(workflowType string, scheduleName string, running bool) (map[string]interface{}, error) {
 	logrus.Debugf("findWorkflows(workflowType=%s,scheduleName=%s,running=%v)", workflowType, scheduleName, running)
 	// escape : -> \:
+
 	workflowType = strings.ReplaceAll(workflowType, ":", "\\:")
 	scheduleName = strings.ReplaceAll(scheduleName, ":", "\\:")
-	runstr := ""
+	runstr := "status IN 'RUNNING'"
 	if !running {
-		runstr = "NOT"
+		runstr = "status IN 'FAILED,COMPLETED,TERMINATED,TIMED_OUT,PAUSED'"
 	}
-	freeText := fmt.Sprintf("workflowType:%s AND scheduleName:%s AND (%s status:RUNNING)", workflowType, scheduleName, runstr)
-	logrus.Debugf("search freeText=%s", freeText)
-	sr := fmt.Sprintf("%s/workflow/search?freeText=%s&sort=endTime:DESC&size=5", conductorURL, url.QueryEscape(freeText))
+
+	query := fmt.Sprintf("workflowType='%s' AND %s", workflowType, runstr)
+
+	logrus.Debugf("search query=%s", query)
+	sr := fmt.Sprintf("%s/workflow/search?query=%s&sort=endTime:DESC&size=5", conductorURL, url.PathEscape(query))
 	resp, data, err := getHTTP(sr)
+
 	if err != nil {
 		return nil, fmt.Errorf("GET /workflow/search failed. err=%s", err)
 	}
+
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("GET /workflow/search failed. status=%d. err=%s", resp.StatusCode, err)
 	}
+
 	var wfdata map[string]interface{}
 	err = json.Unmarshal(data, &wfdata)
 	if err != nil {
