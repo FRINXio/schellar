@@ -17,13 +17,13 @@ scalar JSON
 
 type Query {
   schedule(name: String!): Schedule
-  schedules: [Schedule]
+  schedules(filter: SchedulesFilterInput): [Schedule]
 }
 
 type Mutation {
   createSchedule(input: CreateScheduleInput!): Schedule!
   updateSchedule(input: UpdateScheduleInput!): Schedule!
-  deleteSchedule(input: DeleteScheduleInput!): Boolean!
+  deleteSchedule(name: String!): Boolean!
 }
 
 schema {
@@ -55,6 +55,7 @@ input UpdateScheduleInput {
     toDate: DateTime!
 }
 
-input DeleteScheduleInput {
-    name: String!
+input SchedulesFilterInput {
+    workflowName: String!
+    workflowVersion: String!
 }

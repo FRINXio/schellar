@@ -52,6 +52,7 @@ func (schedule Schedule) ValidateAndUpdate() error {
 
 type DB interface {
 	FindAll() ([]Schedule, error)
+	FindAllByWorkflowType(workflowName string, workflowId string) ([]Schedule, error)
 	FindAllByEnabled(enabled bool) ([]Schedule, error)
 	FindByName(scheduleName string) (*Schedule, error)
 	FindByStatus(status string) ([]Schedule, error)

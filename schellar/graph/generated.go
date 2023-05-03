@@ -11,10 +11,9 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/frinx/schellar/graph/model"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/frinx/schellar/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -47,13 +46,13 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Mutation struct {
 		CreateSchedule func(childComplexity int, input model.CreateScheduleInput) int
-		DeleteSchedule func(childComplexity int, input model.DeleteScheduleInput) int
+		DeleteSchedule func(childComplexity int, name string) int
 		UpdateSchedule func(childComplexity int, input model.UpdateScheduleInput) int
 	}
 
 	Query struct {
 		Schedule  func(childComplexity int, name string) int
-		Schedules func(childComplexity int) int
+		Schedules func(childComplexity int, filter *model.SchedulesFilterInput) int
 	}
 
 	Schedule struct {
@@ -74,11 +73,11 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateSchedule(ctx context.Context, input model.CreateScheduleInput) (*model.Schedule, error)
 	UpdateSchedule(ctx context.Context, input model.UpdateScheduleInput) (*model.Schedule, error)
-	DeleteSchedule(ctx context.Context, input model.DeleteScheduleInput) (bool, error)
+	DeleteSchedule(ctx context.Context, name string) (bool, error)
 }
 type QueryResolver interface {
 	Schedule(ctx context.Context, name string) (*model.Schedule, error)
-	Schedules(ctx context.Context) ([]*model.Schedule, error)
+	Schedules(ctx context.Context, filter *model.SchedulesFilterInput) ([]*model.Schedule, error)
 }
 
 type executableSchema struct {
@@ -118,7 +117,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteSchedule(childComplexity, args["input"].(model.DeleteScheduleInput)), true
+		return e.complexity.Mutation.DeleteSchedule(childComplexity, args["name"].(string)), true
 
 	case "Mutation.updateSchedule":
 		if e.complexity.Mutation.UpdateSchedule == nil {
@@ -149,7 +148,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Schedules(childComplexity), true
+		args, err := ec.field_Query_schedules_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Schedules(childComplexity, args["filter"].(*model.SchedulesFilterInput)), true
 
 	case "Schedule.cronString":
 		if e.complexity.Schedule.CronString == nil {
@@ -237,7 +241,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCreateScheduleInput,
-		ec.unmarshalInputDeleteScheduleInput,
+		ec.unmarshalInputSchedulesFilterInput,
 		ec.unmarshalInputUpdateScheduleInput,
 	)
 	first := true
@@ -324,7 +328,7 @@ func (ec *executionContext) field_Mutation_createSchedule_args(ctx context.Conte
 	var arg0 model.CreateScheduleInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateScheduleInput2mainᚋgraphᚋmodelᚐCreateScheduleInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateScheduleInput2githubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐCreateScheduleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -336,15 +340,15 @@ func (ec *executionContext) field_Mutation_createSchedule_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_deleteSchedule_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.DeleteScheduleInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNDeleteScheduleInput2mainᚋgraphᚋmodelᚐDeleteScheduleInput(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -354,7 +358,7 @@ func (ec *executionContext) field_Mutation_updateSchedule_args(ctx context.Conte
 	var arg0 model.UpdateScheduleInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateScheduleInput2mainᚋgraphᚋmodelᚐUpdateScheduleInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateScheduleInput2githubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐUpdateScheduleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -390,6 +394,21 @@ func (ec *executionContext) field_Query_schedule_args(ctx context.Context, rawAr
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_schedules_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.SchedulesFilterInput
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg0, err = ec.unmarshalOSchedulesFilterInput2ᚖgithubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedulesFilterInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg0
 	return args, nil
 }
 
@@ -459,7 +478,7 @@ func (ec *executionContext) _Mutation_createSchedule(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Schedule)
 	fc.Result = res
-	return ec.marshalNSchedule2ᚖmainᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
+	return ec.marshalNSchedule2ᚖgithubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createSchedule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -538,7 +557,7 @@ func (ec *executionContext) _Mutation_updateSchedule(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Schedule)
 	fc.Result = res
-	return ec.marshalNSchedule2ᚖmainᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
+	return ec.marshalNSchedule2ᚖgithubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSchedule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -603,7 +622,7 @@ func (ec *executionContext) _Mutation_deleteSchedule(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteSchedule(rctx, fc.Args["input"].(model.DeleteScheduleInput))
+		return ec.resolvers.Mutation().DeleteSchedule(rctx, fc.Args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -669,7 +688,7 @@ func (ec *executionContext) _Query_schedule(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Schedule)
 	fc.Result = res
-	return ec.marshalOSchedule2ᚖmainᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
+	return ec.marshalOSchedule2ᚖgithubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_schedule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -734,7 +753,7 @@ func (ec *executionContext) _Query_schedules(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Schedules(rctx)
+		return ec.resolvers.Query().Schedules(rctx, fc.Args["filter"].(*model.SchedulesFilterInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -745,7 +764,7 @@ func (ec *executionContext) _Query_schedules(ctx context.Context, field graphql.
 	}
 	res := resTmp.([]*model.Schedule)
 	fc.Result = res
-	return ec.marshalOSchedule2ᚕᚖmainᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
+	return ec.marshalOSchedule2ᚕᚖgithubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_schedules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -781,6 +800,17 @@ func (ec *executionContext) fieldContext_Query_schedules(ctx context.Context, fi
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Schedule", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_schedules_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -3263,25 +3293,33 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeleteScheduleInput(ctx context.Context, obj interface{}) (model.DeleteScheduleInput, error) {
-	var it model.DeleteScheduleInput
+func (ec *executionContext) unmarshalInputSchedulesFilterInput(ctx context.Context, obj interface{}) (model.SchedulesFilterInput, error) {
+	var it model.SchedulesFilterInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name"}
+	fieldsInOrder := [...]string{"workflowName", "workflowVersion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "name":
+		case "workflowName":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowName"))
+			it.WorkflowName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "workflowVersion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowVersion"))
+			it.WorkflowVersion, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3961,7 +3999,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCreateScheduleInput2mainᚋgraphᚋmodelᚐCreateScheduleInput(ctx context.Context, v interface{}) (model.CreateScheduleInput, error) {
+func (ec *executionContext) unmarshalNCreateScheduleInput2githubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐCreateScheduleInput(ctx context.Context, v interface{}) (model.CreateScheduleInput, error) {
 	res, err := ec.unmarshalInputCreateScheduleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -3979,11 +4017,6 @@ func (ec *executionContext) marshalNDateTime2string(ctx context.Context, sel ast
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNDeleteScheduleInput2mainᚋgraphᚋmodelᚐDeleteScheduleInput(ctx context.Context, v interface{}) (model.DeleteScheduleInput, error) {
-	res, err := ec.unmarshalInputDeleteScheduleInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
@@ -4016,11 +4049,11 @@ func (ec *executionContext) marshalNJSON2string(ctx context.Context, sel ast.Sel
 	return res
 }
 
-func (ec *executionContext) marshalNSchedule2mainᚋgraphᚋmodelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v model.Schedule) graphql.Marshaler {
+func (ec *executionContext) marshalNSchedule2githubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v model.Schedule) graphql.Marshaler {
 	return ec._Schedule(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSchedule2ᚖmainᚋgraphᚋmodelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v *model.Schedule) graphql.Marshaler {
+func (ec *executionContext) marshalNSchedule2ᚖgithubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v *model.Schedule) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4045,7 +4078,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpdateScheduleInput2mainᚋgraphᚋmodelᚐUpdateScheduleInput(ctx context.Context, v interface{}) (model.UpdateScheduleInput, error) {
+func (ec *executionContext) unmarshalNUpdateScheduleInput2githubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐUpdateScheduleInput(ctx context.Context, v interface{}) (model.UpdateScheduleInput, error) {
 	res, err := ec.unmarshalInputUpdateScheduleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -4329,7 +4362,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOSchedule2ᚕᚖmainᚋgraphᚋmodelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v []*model.Schedule) graphql.Marshaler {
+func (ec *executionContext) marshalOSchedule2ᚕᚖgithubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v []*model.Schedule) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -4356,7 +4389,7 @@ func (ec *executionContext) marshalOSchedule2ᚕᚖmainᚋgraphᚋmodelᚐSchedu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSchedule2ᚖmainᚋgraphᚋmodelᚐSchedule(ctx, sel, v[i])
+			ret[i] = ec.marshalOSchedule2ᚖgithubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedule(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4370,11 +4403,19 @@ func (ec *executionContext) marshalOSchedule2ᚕᚖmainᚋgraphᚋmodelᚐSchedu
 	return ret
 }
 
-func (ec *executionContext) marshalOSchedule2ᚖmainᚋgraphᚋmodelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v *model.Schedule) graphql.Marshaler {
+func (ec *executionContext) marshalOSchedule2ᚖgithubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedule(ctx context.Context, sel ast.SelectionSet, v *model.Schedule) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Schedule(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSchedulesFilterInput2ᚖgithubᚗcomᚋfrinxᚋschellarᚋgraphᚋmodelᚐSchedulesFilterInput(ctx context.Context, v interface{}) (*model.SchedulesFilterInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSchedulesFilterInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

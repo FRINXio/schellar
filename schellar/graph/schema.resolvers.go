@@ -18,7 +18,6 @@ import (
 
 // CreateSchedule is the resolver for the createSchedule field.
 func (r *mutationResolver) CreateSchedule(ctx context.Context, input model.CreateScheduleInput) (*model.Schedule, error) {
-
 	var workflowContext map[string]interface{}
 	json.Unmarshal([]byte(input.WorkflowContext), &workflowContext)
 
@@ -84,7 +83,6 @@ func (r *mutationResolver) CreateSchedule(ctx context.Context, input model.Creat
 
 // UpdateSchedule is the resolver for the updateSchedule field.
 func (r *mutationResolver) UpdateSchedule(ctx context.Context, input model.UpdateScheduleInput) (*model.Schedule, error) {
-
 	var workflowContext map[string]interface{}
 	json.Unmarshal([]byte(input.WorkflowContext), &workflowContext)
 
@@ -150,8 +148,8 @@ func (r *mutationResolver) UpdateSchedule(ctx context.Context, input model.Updat
 }
 
 // DeleteSchedule is the resolver for the deleteSchedule field.
-func (r *mutationResolver) DeleteSchedule(ctx context.Context, input model.DeleteScheduleInput) (bool, error) {
-	err := scheduler.Configuration.Db.RemoveByName(input.Name)
+func (r *mutationResolver) DeleteSchedule(ctx context.Context, name string) (bool, error) {
+	err := scheduler.Configuration.Db.RemoveByName(name)
 	if err != nil {
 		logrus.Debugf("Error deleting schedule. err=%v", err)
 		return false, fmt.Errorf("Error deleting schedule. err=%v", err)
@@ -178,8 +176,16 @@ func (r *queryResolver) Schedule(ctx context.Context, name string) (*model.Sched
 }
 
 // Schedules is the resolver for the schedules field.
-func (r *queryResolver) Schedules(ctx context.Context) ([]*model.Schedule, error) {
-	schedules, err := scheduler.Configuration.Db.FindAll()
+func (r *queryResolver) Schedules(ctx context.Context, filter *model.SchedulesFilterInput) ([]*model.Schedule, error) {
+	var schedules []ifc.Schedule
+	var err error
+
+	if filter == nil {
+		schedules, err = scheduler.Configuration.Db.FindAll()
+	} else {
+		schedules, err = scheduler.Configuration.Db.FindAllByWorkflowType(filter.WorkflowName, filter.WorkflowVersion)
+	}
+
 	if err != nil {
 		logrus.Debugf("Error listing schedules. err=%v", err)
 		return nil, fmt.Errorf("Error listing schedules. err=%v", err)
@@ -201,10 +207,3 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.

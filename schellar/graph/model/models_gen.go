@@ -14,10 +14,6 @@ type CreateScheduleInput struct {
 	ToDate          string `json:"toDate"`
 }
 
-type DeleteScheduleInput struct {
-	Name string `json:"name"`
-}
-
 type Schedule struct {
 	ID              string `json:"id"`
 	Name            string `json:"name"`
@@ -30,6 +26,11 @@ type Schedule struct {
 	FromDate        string `json:"fromDate"`
 	ToDate          string `json:"toDate"`
 	Status          string `json:"status"`
+}
+
+type SchedulesFilterInput struct {
+	WorkflowName    string `json:"workflowName"`
+	WorkflowVersion string `json:"workflowVersion"`
 }
 
 type UpdateScheduleInput struct {
