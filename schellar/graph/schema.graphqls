@@ -1,0 +1,60 @@
+type Schedule {
+  id: ID!
+  name: String!
+  enabled: Boolean!
+  parallelRuns: Boolean!
+  workflowName: String!
+  workflowVersion: String!
+  cronString: String!
+  workflowContext: String!
+  fromDate: DateTime!
+  toDate: DateTime!
+  status: String!
+}
+
+scalar DateTime
+scalar JSON
+
+type Query {
+  schedule(name: String!): Schedule
+  schedules: [Schedule]
+}
+
+type Mutation {
+  createSchedule(input: CreateScheduleInput!): Schedule!
+  updateSchedule(input: UpdateScheduleInput!): Schedule!
+  deleteSchedule(input: DeleteScheduleInput!): Boolean!
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+input CreateScheduleInput {
+  name: String!
+  enabled: Boolean!
+  parallelRuns: Boolean!
+  workflowName: String!
+  workflowVersion: String!
+  cronString: String!
+  workflowContext: JSON!
+  fromDate: DateTime!
+  toDate: DateTime!
+}
+
+input UpdateScheduleInput {
+    name: String!
+    enabled: Boolean!
+    parallelRuns: Boolean!
+    workflowName: String!
+    workflowVersion: String!
+    cronString: String!
+    workflowContext: String!
+    fromDate: DateTime!
+    toDate: DateTime!
+}
+
+input DeleteScheduleInput {
+    name: String!
+}

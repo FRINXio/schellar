@@ -1,31 +1,27 @@
 package main
 
 import (
-	"strconv"
+	"log"
+	"net/http"
+	"os"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/frinx/schellar/graph"
 	"github.com/frinx/schellar/ifc"
-	"github.com/frinx/schellar/mongo"
-	"github.com/frinx/schellar/postgres"
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/frinx/schellar/scheduler"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	db                   ifc.DB
-	conductorURL         string
-	checkIntervalSeconds int
-)
+const defaultPort = "3000"
+
+var config = scheduler.Configuration
 
 func main() {
-	logLevel := ifc.GetEnvOrDefault("LOG_LEVEL", "INFO")
-	var err error
-	checkIntervalSecondsString := ifc.GetEnvOrDefault("CHECK_INTERVAL_SECONDS", "10")
-	checkIntervalSeconds, err = strconv.Atoi(checkIntervalSecondsString)
-	if err != nil {
-		logrus.Fatalf("Canot parse CHECK_INTERVAL_SECONDS value '%s'. Error: %v", checkIntervalSecondsString, err)
-	}
-	conductorURL = ifc.GetEnvOrDefault("CONDUCTOR_API_URL", "http://conductor-server:8080/api")
+
+	logLevel := ifc.GetEnvOrDefault("LOG_LEVEL", "DEBUG")
 
 	switch strings.ToLower(logLevel) {
 	case "debug":
@@ -41,20 +37,37 @@ func main() {
 		logrus.SetLevel(logrus.InfoLevel)
 	}
 
-	logrus.Infof("Starting Schellar with CONDUCTOR_API_URL=%s, CHECK_INTERVAL_SECONDS=%d", conductorURL, checkIntervalSeconds)
-
-	backend := ifc.GetEnvOrDefault("BACKEND", "mongo")
-	if backend == "mongo" {
-		db = mongo.InitDB()
-	} else if backend == "postgres" {
-		db = postgres.InitDB()
-	} else {
-		logrus.Fatalf("Cannot initialize backend '%s'", backend)
-	}
-
-	err = startScheduler()
+	var err error
+	err = scheduler.StartScheduler()
 	if err != nil {
 		logrus.Fatalf("Error during scheduler startup: %v", err)
 	}
-	startRestAPI()
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = defaultPort
+	}
+
+	startApi()
+
+	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+func startApi() {
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+
+	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/query", srv)
+	http.Handle("/metrics", promhttp.Handler())
+	http.HandleFunc("/liveness", getLiveness)
+}
+
+func getLiveness(w http.ResponseWriter, r *http.Request) {
+	logrus.Debugf("getLiveness r r=%v", r)
+
+	if r.Method == http.MethodOptions {
+		return
+	}
+	w.Write([]byte("OK"))
 }

@@ -52,7 +52,7 @@ func runMigrations(connectionPool pgxpool.Pool) {
 	}
 }
 
-func InitDB() PostgresDB {
+func InitDB() ifc.DB {
 	var err error
 	url, ok := os.LookupEnv("POSTGRES_DATABASE_URL")
 	if !ok {

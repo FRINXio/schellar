@@ -1,4 +1,4 @@
-package main
+package scheduler
 
 import (
 	"fmt"
@@ -12,19 +12,19 @@ var (
 	scheduledRoutineHashes = make(map[string]*cron.Cron)
 )
 
-func startScheduler() error {
-	err := prepareTimers()
+func StartScheduler() error {
+	err := PrepareTimers()
 	if err != nil {
 		return err
 	}
-	go checkRunningWorkflows()
+	go CheckRunningWorkflows()
 	return nil
 }
 
-func prepareTimers() error {
+func PrepareTimers() error {
 	logrus.Debugf("Refreshing timers according to active schedules")
 
-	activeSchedules, err := db.FindAllByEnabled(true)
+	activeSchedules, err := Configuration.Db.FindAllByEnabled(true)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func prepareTimers() error {
 			}
 		}
 		if !isScheduled {
-			err := launchSchedule(activeSchedule.Name)
+			err := LaunchSchedule(activeSchedule.Name)
 			if err != nil {
 				return err
 			}
@@ -67,9 +67,9 @@ func prepareTimers() error {
 	return nil
 }
 
-func launchSchedule(scheduleName string) error {
+func LaunchSchedule(scheduleName string) error {
 
-	schedule0, err := db.FindByName(scheduleName)
+	schedule0, err := Configuration.Db.FindByName(scheduleName)
 	if err != nil {
 		logrus.Errorf("Couldn't get schedule %s. err=%s", scheduleName, err)
 		return err
@@ -80,7 +80,7 @@ func launchSchedule(scheduleName string) error {
 	c.AddFunc(schedule0.CronString, func() {
 		logrus.Debugf("Processing timer trigger for schedule %s", scheduleName)
 
-		schedule, err := db.FindByName(scheduleName)
+		schedule, err := Configuration.Db.FindByName(scheduleName)
 		if err != nil {
 			logrus.Errorf("Couldn't get schedule %s. err=%s", scheduleName, err)
 			return
@@ -127,7 +127,7 @@ func launchSchedule(scheduleName string) error {
 			}
 
 			logrus.Debugf("Updating Schedule status. name=%s. status=%s", scheduleName, "RUNNING")
-			err0 := db.UpdateStatus(scheduleName, scheduleStatus)
+			err0 := Configuration.Db.UpdateStatus(scheduleName, scheduleStatus)
 			if err0 != nil {
 				logrus.Errorf("Error saving Schedule status err=%s", err0)
 			}
@@ -143,11 +143,11 @@ func launchSchedule(scheduleName string) error {
 	return nil
 }
 
-func checkRunningWorkflows() {
+func CheckRunningWorkflows() {
 	logrus.Debugf("Starting to check running workflow status")
 	for {
 		startTime := time.Now()
-		schedules, err0 := db.FindByStatus("RUNNING")
+		schedules, err0 := Configuration.Db.FindByStatus("RUNNING")
 
 		if err0 != nil {
 			logrus.Errorf("Error getting running schedules. err=%s", err0)
@@ -206,14 +206,14 @@ func checkRunningWorkflows() {
 					wfoutput, schedule.WorkflowContext)
 				schedule.WorkflowContext["lastExecution"] = wfoutput
 			}
-			err0 = db.UpdateStatusAndWorkflowContext(schedule)
+			err0 = Configuration.Db.UpdateStatusAndWorkflowContext(schedule)
 			if err0 != nil {
 				logrus.Errorf("Error updating schedule %s to status %s. err=%s", schedule.Name, scheduleStatus, err0)
 			}
 		}
 
 		elapsedTime := time.Now().Sub(startTime)
-		remainingSleep := float64(checkIntervalSeconds) - elapsedTime.Seconds()
+		remainingSleep := float64(Configuration.CheckIntervalSeconds) - elapsedTime.Seconds()
 		if remainingSleep > 0 {
 			logrus.Debugf("Sleeping for %d seconds...", int(remainingSleep))
 			time.Sleep(time.Duration(remainingSleep) * time.Second)
@@ -221,7 +221,7 @@ func checkRunningWorkflows() {
 	}
 }
 
-func getStringValue(m map[string]interface{}, keyName string, defaultValue string) string {
+func GetStringValue(m map[string]interface{}, keyName string, defaultValue string) string {
 	v, exists := m[keyName]
 	if !exists {
 		return defaultValue
