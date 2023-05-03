@@ -18,31 +18,49 @@ import (
 
 // CreateSchedule is the resolver for the createSchedule field.
 func (r *mutationResolver) CreateSchedule(ctx context.Context, input model.CreateScheduleInput) (*model.Schedule, error) {
-	var workflowContext map[string]interface{}
-	json.Unmarshal([]byte(input.WorkflowContext), &workflowContext)
 
-	dateFrom, err := time.Parse(time.RFC3339, input.FromDate)
-	if err != nil {
-		fmt.Println("Error while parsing the date time :", err)
-	}
-
-	dateTo, err := time.Parse(time.RFC3339, input.ToDate)
-	if err != nil {
-		fmt.Println("Error while parsing the date time :", err)
-	}
 	var schedule = ifc.Schedule{
 		Name:            input.Name,
-		Enabled:         input.Enabled,
-		ParallelRuns:    input.ParallelRuns,
 		WorkflowName:    input.WorkflowName,
 		WorkflowVersion: input.WorkflowVersion,
 		CronString:      input.CronString,
-		WorkflowContext: workflowContext,
-		FromDate:        &dateFrom,
-		ToDate:          &dateTo,
 	}
 
-	err = schedule.ValidateAndUpdate()
+	if input.Enabled != nil {
+		schedule.Enabled = *input.Enabled
+	}
+
+	if input.ParallelRuns != nil {
+		schedule.ParallelRuns = *input.ParallelRuns
+	}
+
+	if input.WorkflowContext != nil {
+		var workflowContext map[string]interface{}
+		json.Unmarshal([]byte(*input.WorkflowContext), &workflowContext)
+		schedule.WorkflowContext = workflowContext
+	}
+
+	if input.FromDate != nil {
+		fromDate, err := time.Parse(time.RFC3339, *input.FromDate)
+		if err != nil {
+			fmt.Println("Error while parsing the date time :", err)
+			return nil, fmt.Errorf("Error while parsing the date time. err=%v", err)
+
+		}
+		schedule.FromDate = &fromDate
+	}
+
+	if input.ToDate != nil {
+		toDate, err := time.Parse(time.RFC3339, *input.FromDate)
+		if err != nil {
+			fmt.Println("Error while parsing the date time :", err)
+			return nil, fmt.Errorf("Error while parsing the date time. err=%v", err)
+
+		}
+		schedule.ToDate = &toDate
+	}
+
+	err := schedule.ValidateAndUpdate()
 	if err != nil {
 		logrus.Debugf("Error validating schedule. err=%v", err)
 		return nil, fmt.Errorf("Error validating schedule %s", err)
@@ -68,47 +86,63 @@ func (r *mutationResolver) CreateSchedule(ctx context.Context, input model.Creat
 	}
 	scheduler.PrepareTimers()
 
-	return &model.Schedule{
-		Name:            input.Name,
-		Enabled:         input.Enabled,
-		ParallelRuns:    input.ParallelRuns,
-		WorkflowName:    input.WorkflowName,
-		WorkflowVersion: input.WorkflowVersion,
-		CronString:      input.CronString,
-		WorkflowContext: input.WorkflowContext,
-		FromDate:        input.FromDate,
-		ToDate:          input.ToDate,
-	}, nil
+	return ConvertIfcToModel(&schedule), nil
 }
 
 // UpdateSchedule is the resolver for the updateSchedule field.
-func (r *mutationResolver) UpdateSchedule(ctx context.Context, input model.UpdateScheduleInput) (*model.Schedule, error) {
-	var workflowContext map[string]interface{}
-	json.Unmarshal([]byte(input.WorkflowContext), &workflowContext)
-
-	dateFrom, err := time.Parse(time.RFC3339, input.FromDate)
-	if err != nil {
-		fmt.Println("Error while parsing the date time :", err)
-	}
-
-	dateTo, err := time.Parse(time.RFC3339, input.ToDate)
-	if err != nil {
-		fmt.Println("Error while parsing the date time :", err)
-	}
+func (r *mutationResolver) UpdateSchedule(ctx context.Context, name string, input model.UpdateScheduleInput) (*model.Schedule, error) {
 
 	var schedule = ifc.Schedule{
-		Name:            input.Name,
-		Enabled:         input.Enabled,
-		ParallelRuns:    input.ParallelRuns,
-		WorkflowName:    input.WorkflowName,
-		WorkflowVersion: input.WorkflowVersion,
-		CronString:      input.CronString,
-		WorkflowContext: workflowContext,
-		FromDate:        &dateFrom,
-		ToDate:          &dateTo,
+		Name: name,
 	}
 
-	err = schedule.ValidateAndUpdate()
+	if input.WorkflowName != nil {
+		schedule.WorkflowName = *input.WorkflowName
+	}
+
+	if input.WorkflowVersion != nil {
+		schedule.WorkflowVersion = *input.WorkflowVersion
+	}
+
+	if input.CronString != nil {
+		schedule.CronString = *input.CronString
+	}
+
+	if input.Enabled != nil {
+		schedule.Enabled = *input.Enabled
+	}
+
+	if input.ParallelRuns != nil {
+		schedule.ParallelRuns = *input.ParallelRuns
+	}
+
+	if input.WorkflowContext != nil {
+		var workflowContext map[string]interface{}
+		json.Unmarshal([]byte(*input.WorkflowContext), &workflowContext)
+		schedule.WorkflowContext = workflowContext
+	}
+
+	if input.FromDate != nil {
+		fromDate, err := time.Parse(time.RFC3339, *input.FromDate)
+		if err != nil {
+			fmt.Println("Error while parsing the date time :", err)
+			return nil, fmt.Errorf("Error while parsing the date time. err=%v", err)
+
+		}
+		schedule.FromDate = &fromDate
+	}
+
+	if input.ToDate != nil {
+		toDate, err := time.Parse(time.RFC3339, *input.FromDate)
+		if err != nil {
+			fmt.Println("Error while parsing the date time :", err)
+			return nil, fmt.Errorf("Error while parsing the date time. err=%v", err)
+
+		}
+		schedule.ToDate = &toDate
+	}
+
+	err := schedule.ValidateAndUpdate()
 	if err != nil {
 		logrus.Debugf("Error validating schedule. err=%v", err)
 		return nil, fmt.Errorf("Error validating schedule %s", err)
@@ -134,17 +168,7 @@ func (r *mutationResolver) UpdateSchedule(ctx context.Context, input model.Updat
 	}
 
 	scheduler.PrepareTimers()
-	return &model.Schedule{
-		Name:            input.Name,
-		Enabled:         input.Enabled,
-		ParallelRuns:    input.ParallelRuns,
-		WorkflowName:    input.WorkflowName,
-		WorkflowVersion: input.WorkflowVersion,
-		CronString:      input.CronString,
-		WorkflowContext: input.WorkflowContext,
-		FromDate:        input.FromDate,
-		ToDate:          input.ToDate,
-	}, nil
+	return ConvertIfcToModel(&schedule), nil
 }
 
 // DeleteSchedule is the resolver for the deleteSchedule field.
@@ -176,7 +200,7 @@ func (r *queryResolver) Schedule(ctx context.Context, name string) (*model.Sched
 }
 
 // Schedules is the resolver for the schedules field.
-func (r *queryResolver) Schedules(ctx context.Context, filter *model.SchedulesFilterInput) ([]*model.Schedule, error) {
+func (r *queryResolver) Schedules(ctx context.Context, after *string, before *string, first *int, last *int, filter *model.SchedulesFilterInput) ([]*model.Schedule, error) {
 	var schedules []ifc.Schedule
 	var err error
 

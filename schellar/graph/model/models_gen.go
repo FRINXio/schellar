@@ -3,19 +3,18 @@
 package model
 
 type CreateScheduleInput struct {
-	Name            string `json:"name"`
-	Enabled         bool   `json:"enabled"`
-	ParallelRuns    bool   `json:"parallelRuns"`
-	WorkflowName    string `json:"workflowName"`
-	WorkflowVersion string `json:"workflowVersion"`
-	CronString      string `json:"cronString"`
-	WorkflowContext string `json:"workflowContext"`
-	FromDate        string `json:"fromDate"`
-	ToDate          string `json:"toDate"`
+	Name            string  `json:"name"`
+	WorkflowName    string  `json:"workflowName"`
+	WorkflowVersion string  `json:"workflowVersion"`
+	CronString      string  `json:"cronString"`
+	Enabled         *bool   `json:"enabled,omitempty"`
+	ParallelRuns    *bool   `json:"parallelRuns,omitempty"`
+	WorkflowContext *string `json:"workflowContext,omitempty"`
+	FromDate        *string `json:"fromDate,omitempty"`
+	ToDate          *string `json:"toDate,omitempty"`
 }
 
 type Schedule struct {
-	ID              string `json:"id"`
 	Name            string `json:"name"`
 	Enabled         bool   `json:"enabled"`
 	ParallelRuns    bool   `json:"parallelRuns"`
@@ -34,13 +33,12 @@ type SchedulesFilterInput struct {
 }
 
 type UpdateScheduleInput struct {
-	Name            string `json:"name"`
-	Enabled         bool   `json:"enabled"`
-	ParallelRuns    bool   `json:"parallelRuns"`
-	WorkflowName    string `json:"workflowName"`
-	WorkflowVersion string `json:"workflowVersion"`
-	CronString      string `json:"cronString"`
-	WorkflowContext string `json:"workflowContext"`
-	FromDate        string `json:"fromDate"`
-	ToDate          string `json:"toDate"`
+	WorkflowName    *string `json:"workflowName,omitempty"`
+	WorkflowVersion *string `json:"workflowVersion,omitempty"`
+	CronString      *string `json:"cronString,omitempty"`
+	Enabled         *bool   `json:"enabled,omitempty"`
+	ParallelRuns    *bool   `json:"parallelRuns,omitempty"`
+	WorkflowContext *string `json:"workflowContext,omitempty"`
+	FromDate        *string `json:"fromDate,omitempty"`
+	ToDate          *string `json:"toDate,omitempty"`
 }

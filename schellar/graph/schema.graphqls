@@ -1,5 +1,4 @@
 type Schedule {
-  id: ID!
   name: String!
   enabled: Boolean!
   parallelRuns: Boolean!
@@ -17,12 +16,18 @@ scalar JSON
 
 type Query {
   schedule(name: String!): Schedule
-  schedules(filter: SchedulesFilterInput): [Schedule]
+  schedules(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    filter: SchedulesFilterInput
+  ): [Schedule]
 }
 
 type Mutation {
   createSchedule(input: CreateScheduleInput!): Schedule!
-  updateSchedule(input: UpdateScheduleInput!): Schedule!
+  updateSchedule(name: String!, input: UpdateScheduleInput!): Schedule!
   deleteSchedule(name: String!): Boolean!
 }
 
@@ -33,29 +38,28 @@ schema {
 
 input CreateScheduleInput {
   name: String!
-  enabled: Boolean!
-  parallelRuns: Boolean!
   workflowName: String!
   workflowVersion: String!
   cronString: String!
-  workflowContext: JSON!
-  fromDate: DateTime!
-  toDate: DateTime!
+  enabled: Boolean
+  parallelRuns: Boolean
+  workflowContext: String
+  fromDate: DateTime
+  toDate: DateTime
 }
 
 input UpdateScheduleInput {
-    name: String!
-    enabled: Boolean!
-    parallelRuns: Boolean!
-    workflowName: String!
-    workflowVersion: String!
-    cronString: String!
-    workflowContext: String!
-    fromDate: DateTime!
-    toDate: DateTime!
+  workflowName: String
+  workflowVersion: String
+  cronString: String
+  enabled: Boolean
+  parallelRuns: Boolean
+  workflowContext: String
+  fromDate: DateTime
+  toDate: DateTime
 }
 
 input SchedulesFilterInput {
-    workflowName: String!
-    workflowVersion: String!
+  workflowName: String!
+  workflowVersion: String!
 }
