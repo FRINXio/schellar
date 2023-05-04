@@ -2,6 +2,7 @@ package graph
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -68,9 +69,6 @@ func GetSchedules() []*model.Schedule {
 	for i, v := range ifc_schedules {
 		model_schedules[i] = ConvertIfcToModel(&v)
 	}
-	// sort.Slice(model_schedules, func(i, j int) bool {
-	// 	return model_schedules[i].Name < model_schedules[j].Name
-	// })
 	return model_schedules
 }
 
@@ -80,42 +78,109 @@ func GetSchedulesFilter(filter *model.SchedulesFilterInput) []*model.Schedule {
 	for i, v := range ifc_schedules {
 		model_schedules[i] = ConvertIfcToModel(&v)
 	}
-	// sort.Slice(model_schedules, func(i, j int) bool {
-	// 	return model_schedules[i].Name < model_schedules[j].Name
-	// })
 	return model_schedules
 }
 
-func FilterSchedules(filter *model.SchedulesFilterInput, schedules []*model.Schedule) []*model.Schedule {
-
-	if filter != nil {
-		filteredSchedules := make([]*model.Schedule, 0)
-
-		for _, schedule := range schedules {
-			if schedule.WorkflowName == filter.WorkflowName && schedule.WorkflowVersion == filter.WorkflowVersion {
-				filteredSchedules = append(filteredSchedules, schedule)
-			}
-		}
-
-		return filteredSchedules
-	}
-	return schedules
-}
-
-func getScheduleAfterCursor(cursor string, schedules []*model.Schedule) []*model.Schedule {
+func getScheduleAfterCursor(cursor string, schedules []*model.Schedule) ([]*model.Schedule, int) {
 	for i, schedule := range schedules {
 		if schedule.Name == cursor {
-			return schedules[i+1 : len(schedules)]
+			return schedules[i+1 : len(schedules)], i
 		}
 	}
+	return nil, 0
+}
+
+func getScheduleBeforeCursor(cursor string, schedules []*model.Schedule) ([]*model.Schedule, int) {
+	for i, schedule := range schedules {
+		if schedule.Name == cursor {
+			return schedules[0:i], i
+		}
+	}
+	return nil, 0
+}
+
+func handlePagination(after *string, before *string, first *int, last *int) error {
+
+	if first != nil && last != nil {
+		return errors.New("Only one of 'first' and 'last' can be set")
+	}
+
+	if before != nil && after != nil {
+		return errors.New("Only one of 'after' and 'before' can be set")
+	}
+
+	if after != nil && first == nil {
+		return errors.New("'after' needs to be used with 'first'")
+	}
+
+	if before != nil && last == nil {
+		return errors.New("'before' needs to be used with 'last'")
+	}
+
+	if first != nil && *first <= 0 {
+		return errors.New("'first' has to be positive")
+	}
+
+	if last != nil && *last <= 0 {
+		return errors.New("'last' has to be positive")
+	}
+
 	return nil
 }
 
-func getScheduleBeforeCursor(cursor string, schedules []*model.Schedule) []*model.Schedule {
-	for i, schedule := range schedules {
-		if schedule.Name == cursor {
-			return schedules[0:i]
+func getSchedulesWithFilter(after *string, before *string, schedules []*model.Schedule, first *int, last *int) ([]*model.Schedule, bool, bool) {
+	var filteredSchedules []*model.Schedule
+
+	var hasPreviousPage bool = false
+	var hasNextPage bool = false
+	var cursor string
+	var position int
+
+	if after != nil {
+		cursor = *after
+		filteredSchedules, position = getScheduleAfterCursor(cursor, schedules)
+		filteredCount := len(filteredSchedules)
+
+		endIndex := *first
+		if endIndex > filteredCount {
+			endIndex = filteredCount
 		}
+		filteredSchedules = filteredSchedules[0:endIndex]
+		if position > 0 {
+			hasPreviousPage = true
+		}
+		if endIndex < filteredCount {
+			hasNextPage = true
+		}
+
+	} else if before != nil {
+		cursor = *before
+
+		filteredCountBefore := len(schedules)
+		filteredSchedules, position = getScheduleBeforeCursor(cursor, schedules)
+		filteredCount := len(filteredSchedules)
+
+		startIndex := filteredCount - *last
+		if startIndex < 0 {
+			startIndex = 0
+		}
+
+		filteredSchedules = filteredSchedules[startIndex:filteredCount]
+		filteredCount = len(filteredSchedules)
+
+		prevousScheduls := position - filteredCount
+		nextScheduls := filteredCountBefore - position + 1
+
+		if prevousScheduls > 0 {
+			hasPreviousPage = true
+		}
+		if nextScheduls > 0 {
+			hasNextPage = true
+		}
+
+	} else {
+		return schedules, hasPreviousPage, hasNextPage
 	}
-	return nil
+
+	return filteredSchedules, hasPreviousPage, hasNextPage
 }

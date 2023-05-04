@@ -65,7 +65,7 @@ func (db MongoDB) FindAllByWorkflowType(workflowName string, workflowId string) 
 
 	st := sc.DB(db.dbName).C("schedules")
 	var activeSchedules []ifc.Schedule
-	err := st.Find(map[string]interface{}{"workflowName": workflowName, "workflowId": workflowId}).All(&activeSchedules)
+	err := st.Find(map[string]interface{}{"workflowName": workflowName, "workflowId": workflowId}).All(&activeSchedules) // TODO SORT BY SCHEDULE_NAME ASC
 	return activeSchedules, err
 }
 

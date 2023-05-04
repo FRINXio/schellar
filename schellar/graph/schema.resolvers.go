@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/frinx/schellar/graph/model"
@@ -201,45 +200,18 @@ func (r *queryResolver) Schedule(ctx context.Context, name string) (*model.Sched
 // Schedules is the resolver for the schedules field.
 func (r *queryResolver) Schedules(ctx context.Context, after *string, before *string, first *int, last *int, filter *model.SchedulesFilterInput) (*model.ScheduleConnection, error) {
 
+	err := handlePagination(after, before, first, last)
+	if err != nil {
+		return nil, err
+	}
+
 	schedules := GetSchedulesFilter(filter)
-
 	totalCount := len(schedules)
-	// schedules = FilterSchedules(filter, schedules)
 
-	var cursor string
+	var hasNext bool
+	var hasPrevious bool
 
-	if after != nil {
-		cursor = *after
-		schedules = getScheduleAfterCursor(cursor, schedules)
-	}
-
-	if before != nil {
-		cursor = *before
-		schedules = getScheduleBeforeCursor(cursor, schedules)
-	}
-
-	for _, schedule := range schedules {
-		log.Println(schedule)
-	}
-
-	filteredCount := len(schedules)
-
-	if first != nil {
-
-		endIndex := *first
-		if endIndex > filteredCount {
-			endIndex = filteredCount
-		}
-		schedules = schedules[0:endIndex]
-	}
-
-	if last != nil {
-		startIndex := filteredCount - *last
-		if startIndex < 0 {
-			startIndex = 0
-		}
-		schedules = schedules[startIndex:filteredCount]
-	}
+	schedules, hasPrevious, hasNext = getSchedulesWithFilter(after, before, schedules, first, last)
 
 	edges := make([]*model.ScheduleEdge, len(schedules))
 	for i, schedule := range schedules {
@@ -261,8 +233,8 @@ func (r *queryResolver) Schedules(ctx context.Context, after *string, before *st
 	pageInfo := model.PageInfo{
 		StartCursor:     &statsCursor,
 		EndCursor:       &endCursor,
-		HasPreviousPage: false,
-		HasNextPage:     false,
+		HasPreviousPage: hasPrevious,
+		HasNextPage:     hasNext,
 	}
 
 	connections := model.ScheduleConnection{

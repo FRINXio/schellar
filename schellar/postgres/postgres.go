@@ -143,7 +143,7 @@ func (db PostgresDB) FindAll() ([]ifc.Schedule, error) {
 }
 
 func (db PostgresDB) FindAllByWorkflowType(workflowName string, workflowId string) ([]ifc.Schedule, error) {
-	return db.queryAll("SELECT "+rowNames+" FROM schedule WHERE workflow_name=$1 and workflow_version=$2", workflowName, workflowId)
+	return db.queryAll("SELECT "+rowNames+" FROM schedule WHERE workflow_name=$1 and workflow_version=$2 ORDER BY schedule_name ASC", workflowName, workflowId)
 }
 
 func (db PostgresDB) FindAllByEnabled(enabled bool) ([]ifc.Schedule, error) {
