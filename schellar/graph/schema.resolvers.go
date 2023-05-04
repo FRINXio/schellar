@@ -205,7 +205,14 @@ func (r *queryResolver) Schedules(ctx context.Context, after *string, before *st
 		return nil, err
 	}
 
-	schedules := GetSchedulesFilter(filter)
+	var schedules []*model.Schedule
+
+	if filter != nil {
+		schedules = GetSchedulesFilter(filter)
+	} else {
+		schedules = GetSchedules()
+	}
+
 	totalCount := len(schedules)
 
 	var hasNext bool
