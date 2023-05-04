@@ -1,3 +1,6 @@
+scalar DateTime
+scalar JSON
+
 type Schedule {
   name: String!
   enabled: Boolean!
@@ -11,29 +14,22 @@ type Schedule {
   status: String!
 }
 
-scalar DateTime
-scalar JSON
-
-type Query {
-  schedule(name: String!): Schedule
-  schedules(
-    after: String
-    before: String
-    first: Int
-    last: Int
-    filter: SchedulesFilterInput
-  ): [Schedule]
+type ScheduleEdge {
+  node: Schedule!
+  cursor: String!
 }
 
-type Mutation {
-  createSchedule(input: CreateScheduleInput!): Schedule!
-  updateSchedule(name: String!, input: UpdateScheduleInput!): Schedule!
-  deleteSchedule(name: String!): Boolean!
+type ScheduleConnection {
+  edges: [ScheduleEdge]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
-schema {
-  query: Query
-  mutation: Mutation
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
 }
 
 input CreateScheduleInput {
@@ -63,3 +59,26 @@ input SchedulesFilterInput {
   workflowName: String!
   workflowVersion: String!
 }
+
+type Query {
+  schedule(name: String!): Schedule
+  schedules(
+    after: String
+    before: String
+    first: Int
+    last: Int
+    filter: SchedulesFilterInput
+  ): ScheduleConnection
+}
+
+type Mutation {
+  createSchedule(input: CreateScheduleInput!): Schedule!
+  updateSchedule(name: String!, input: UpdateScheduleInput!): Schedule!
+  deleteSchedule(name: String!): Boolean!
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+

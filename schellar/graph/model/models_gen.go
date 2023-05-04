@@ -14,6 +14,13 @@ type CreateScheduleInput struct {
 	ToDate          *string `json:"toDate,omitempty"`
 }
 
+type PageInfo struct {
+	HasNextPage     bool    `json:"hasNextPage"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	StartCursor     *string `json:"startCursor,omitempty"`
+	EndCursor       *string `json:"endCursor,omitempty"`
+}
+
 type Schedule struct {
 	Name            string `json:"name"`
 	Enabled         bool   `json:"enabled"`
@@ -25,6 +32,17 @@ type Schedule struct {
 	FromDate        string `json:"fromDate"`
 	ToDate          string `json:"toDate"`
 	Status          string `json:"status"`
+}
+
+type ScheduleConnection struct {
+	Edges      []*ScheduleEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+	TotalCount int             `json:"totalCount"`
+}
+
+type ScheduleEdge struct {
+	Node   *Schedule `json:"node"`
+	Cursor string    `json:"cursor"`
 }
 
 type SchedulesFilterInput struct {

@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/frinx/schellar/graph/model"
@@ -18,7 +19,6 @@ import (
 
 // CreateSchedule is the resolver for the createSchedule field.
 func (r *mutationResolver) CreateSchedule(ctx context.Context, input model.CreateScheduleInput) (*model.Schedule, error) {
-
 	var schedule = ifc.Schedule{
 		Name:            input.Name,
 		WorkflowName:    input.WorkflowName,
@@ -91,7 +91,6 @@ func (r *mutationResolver) CreateSchedule(ctx context.Context, input model.Creat
 
 // UpdateSchedule is the resolver for the updateSchedule field.
 func (r *mutationResolver) UpdateSchedule(ctx context.Context, name string, input model.UpdateScheduleInput) (*model.Schedule, error) {
-
 	var schedule = ifc.Schedule{
 		Name: name,
 	}
@@ -200,27 +199,78 @@ func (r *queryResolver) Schedule(ctx context.Context, name string) (*model.Sched
 }
 
 // Schedules is the resolver for the schedules field.
-func (r *queryResolver) Schedules(ctx context.Context, after *string, before *string, first *int, last *int, filter *model.SchedulesFilterInput) ([]*model.Schedule, error) {
-	var schedules []ifc.Schedule
-	var err error
+func (r *queryResolver) Schedules(ctx context.Context, after *string, before *string, first *int, last *int, filter *model.SchedulesFilterInput) (*model.ScheduleConnection, error) {
 
-	if filter == nil {
-		schedules, err = scheduler.Configuration.Db.FindAll()
-	} else {
-		schedules, err = scheduler.Configuration.Db.FindAllByWorkflowType(filter.WorkflowName, filter.WorkflowVersion)
+	schedules := GetSchedulesFilter(filter)
+
+	totalCount := len(schedules)
+	// schedules = FilterSchedules(filter, schedules)
+
+	var cursor string
+
+	if after != nil {
+		cursor = *after
+		schedules = getScheduleAfterCursor(cursor, schedules)
 	}
 
-	if err != nil {
-		logrus.Debugf("Error listing schedules. err=%v", err)
-		return nil, fmt.Errorf("Error listing schedules. err=%v", err)
+	if before != nil {
+		cursor = *before
+		schedules = getScheduleBeforeCursor(cursor, schedules)
 	}
 
-	model_schedules := make([]*model.Schedule, len(schedules))
-	for i, v := range schedules {
-		model_schedules[i] = ConvertIfcToModel(&v)
+	for _, schedule := range schedules {
+		log.Println(schedule)
 	}
 
-	return model_schedules, nil
+	filteredCount := len(schedules)
+
+	if first != nil {
+
+		endIndex := *first
+		if endIndex > filteredCount {
+			endIndex = filteredCount
+		}
+		schedules = schedules[0:endIndex]
+	}
+
+	if last != nil {
+		startIndex := filteredCount - *last
+		if startIndex < 0 {
+			startIndex = 0
+		}
+		schedules = schedules[startIndex:filteredCount]
+	}
+
+	edges := make([]*model.ScheduleEdge, len(schedules))
+	for i, schedule := range schedules {
+		cursor := schedule.Name
+		edges[i] = &model.ScheduleEdge{
+			Cursor: cursor,
+			Node:   schedule,
+		}
+	}
+
+	var statsCursor string = ""
+	var endCursor string = ""
+
+	if len(edges) > 0 {
+		statsCursor = edges[0].Cursor
+		endCursor = edges[len(edges)-1].Cursor
+	}
+
+	pageInfo := model.PageInfo{
+		StartCursor:     &statsCursor,
+		EndCursor:       &endCursor,
+		HasPreviousPage: false,
+		HasNextPage:     false,
+	}
+
+	connections := model.ScheduleConnection{
+		Edges:      edges,
+		PageInfo:   &pageInfo,
+		TotalCount: totalCount,
+	}
+	return &connections, nil
 }
 
 // Mutation returns MutationResolver implementation.
