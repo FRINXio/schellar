@@ -3,7 +3,7 @@ module github.com/frinx/schellar
 go 1.18
 
 require (
-	github.com/99designs/gqlgen v0.17.30
+	github.com/99designs/gqlgen v0.17.31
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/jackc/tern v1.13.0
 	github.com/pkg/errors v0.9.1

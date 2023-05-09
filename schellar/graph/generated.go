@@ -3699,74 +3699,83 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		case "workflowName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowName"))
-			it.WorkflowName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.WorkflowName = data
 		case "workflowVersion":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowVersion"))
-			it.WorkflowVersion, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.WorkflowVersion = data
 		case "cronString":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cronString"))
-			it.CronString, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.CronString = data
 		case "enabled":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
-			it.Enabled, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Enabled = data
 		case "parallelRuns":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parallelRuns"))
-			it.ParallelRuns, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ParallelRuns = data
 		case "workflowContext":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowContext"))
-			it.WorkflowContext, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.WorkflowContext = data
 		case "fromDate":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromDate"))
-			it.FromDate, err = ec.unmarshalODateTime2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODateTime2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FromDate = data
 		case "toDate":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toDate"))
-			it.ToDate, err = ec.unmarshalODateTime2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODateTime2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ToDate = data
 		}
 	}
 
@@ -3791,18 +3800,20 @@ func (ec *executionContext) unmarshalInputSchedulesFilterInput(ctx context.Conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowName"))
-			it.WorkflowName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.WorkflowName = data
 		case "workflowVersion":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowVersion"))
-			it.WorkflowVersion, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.WorkflowVersion = data
 		}
 	}
 
@@ -3827,66 +3838,74 @@ func (ec *executionContext) unmarshalInputUpdateScheduleInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowName"))
-			it.WorkflowName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.WorkflowName = data
 		case "workflowVersion":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowVersion"))
-			it.WorkflowVersion, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.WorkflowVersion = data
 		case "cronString":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cronString"))
-			it.CronString, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.CronString = data
 		case "enabled":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
-			it.Enabled, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Enabled = data
 		case "parallelRuns":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parallelRuns"))
-			it.ParallelRuns, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ParallelRuns = data
 		case "workflowContext":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowContext"))
-			it.WorkflowContext, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.WorkflowContext = data
 		case "fromDate":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromDate"))
-			it.FromDate, err = ec.unmarshalODateTime2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODateTime2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FromDate = data
 		case "toDate":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toDate"))
-			it.ToDate, err = ec.unmarshalODateTime2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODateTime2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ToDate = data
 		}
 	}
 
