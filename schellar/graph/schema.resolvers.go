@@ -50,7 +50,7 @@ func (r *mutationResolver) CreateSchedule(ctx context.Context, input model.Creat
 	}
 
 	if input.ToDate != nil {
-		toDate, err := time.Parse(time.RFC3339, *input.FromDate)
+		toDate, err := time.Parse(time.RFC3339, *input.ToDate)
 		if err != nil {
 			fmt.Println("Error while parsing the date time :", err)
 			return nil, fmt.Errorf("Error while parsing the date time. err=%v", err)
@@ -131,7 +131,7 @@ func (r *mutationResolver) UpdateSchedule(ctx context.Context, name string, inpu
 	}
 
 	if input.ToDate != nil {
-		toDate, err := time.Parse(time.RFC3339, *input.FromDate)
+		toDate, err := time.Parse(time.RFC3339, *input.ToDate)
 		if err != nil {
 			fmt.Println("Error while parsing the date time :", err)
 			return nil, fmt.Errorf("Error while parsing the date time. err=%v", err)
