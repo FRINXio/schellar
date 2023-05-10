@@ -171,7 +171,19 @@ func (r *mutationResolver) UpdateSchedule(ctx context.Context, name string, inpu
 
 // DeleteSchedule is the resolver for the deleteSchedule field.
 func (r *mutationResolver) DeleteSchedule(ctx context.Context, name string) (bool, error) {
-	err := scheduler.Configuration.Db.RemoveByName(name)
+
+	schedule, err := scheduler.Configuration.Db.FindByName(name)
+	if err != nil {
+		logrus.Debugf("Error getting schedule with name '%s'. err=%v", name, err)
+		return false, fmt.Errorf("Error getting schedule with name '%s'. err=%v", name, err)
+	}
+
+	if schedule == nil {
+		logrus.Debugf("Error getting schedule with name '%s'", name)
+		return false, fmt.Errorf("Error getting schedule with name '%s'", name)
+	}
+
+	err = scheduler.Configuration.Db.RemoveByName(name)
 	if err != nil {
 		logrus.Debugf("Error deleting schedule. err=%v", err)
 		return false, fmt.Errorf("Error deleting schedule. err=%v", err)
@@ -190,8 +202,8 @@ func (r *queryResolver) Schedule(ctx context.Context, name string) (*model.Sched
 	}
 
 	if schedule == nil {
-		logrus.Debugf("Error getting schedule with name '%s'", name)
-		return nil, fmt.Errorf("Error getting schedule with name '%s'", name)
+		logrus.Debugf("Schedule with name '%s' not exist", name)
+		return nil, fmt.Errorf("Schedule with name '%s' not exist", name)
 	}
 
 	return ConvertIfcToModel(schedule), nil
