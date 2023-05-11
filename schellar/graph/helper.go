@@ -36,7 +36,7 @@ func ConvertIfcToModel(schedule_ifc *ifc.Schedule) *model.Schedule {
 	}
 
 	if schedule_ifc.ToDate != nil {
-		schedule_model.FromDate = schedule_ifc.ToDate.Format(time.RFC3339)
+		schedule_model.ToDate = schedule_ifc.ToDate.Format(time.RFC3339)
 	}
 
 	return schedule_model
