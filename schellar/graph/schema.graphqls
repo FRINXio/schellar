@@ -1,6 +1,16 @@
 scalar DateTime
 scalar JSON
 
+enum Status {
+  UNKNOWN
+  COMPLETED
+  FAILED
+  PAUSED
+  RUNNING
+  TERMINATED
+  TIMED_OUT
+}
+
 type Schedule {
   name: String!
   enabled: Boolean!
@@ -11,7 +21,7 @@ type Schedule {
   workflowContext: String!
   fromDate: DateTime!
   toDate: DateTime!
-  status: String!
+  status: Status!
 }
 
 type ScheduleEdge {

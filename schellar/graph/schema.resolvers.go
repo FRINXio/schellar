@@ -171,7 +171,6 @@ func (r *mutationResolver) UpdateSchedule(ctx context.Context, name string, inpu
 
 // DeleteSchedule is the resolver for the deleteSchedule field.
 func (r *mutationResolver) DeleteSchedule(ctx context.Context, name string) (bool, error) {
-
 	schedule, err := scheduler.Configuration.Db.FindByName(name)
 	if err != nil {
 		logrus.Debugf("Error getting schedule with name '%s'. err=%v", name, err)

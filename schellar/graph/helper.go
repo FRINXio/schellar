@@ -11,6 +11,15 @@ import (
 	"github.com/frinx/schellar/scheduler"
 )
 
+func StringToStatusType(s string) model.Status {
+	for _, status := range model.AllStatus {
+		if string(status) == s {
+			return status
+		}
+	}
+	return model.StatusUnknown
+}
+
 func ConvertIfcToModel(schedule_ifc *ifc.Schedule) *model.Schedule {
 
 	schedule_model := &model.Schedule{
@@ -20,7 +29,7 @@ func ConvertIfcToModel(schedule_ifc *ifc.Schedule) *model.Schedule {
 		WorkflowName:    schedule_ifc.WorkflowName,
 		WorkflowVersion: schedule_ifc.WorkflowVersion,
 		CronString:      schedule_ifc.CronString,
-		Status:          schedule_ifc.Status,
+		Status:          StringToStatusType(schedule_ifc.Status),
 		WorkflowContext: "",
 		FromDate:        "",
 		ToDate:          "",

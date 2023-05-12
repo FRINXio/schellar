@@ -2,6 +2,12 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type CreateScheduleInput struct {
 	Name            string  `json:"name"`
 	WorkflowName    string  `json:"workflowName"`
@@ -31,7 +37,7 @@ type Schedule struct {
 	WorkflowContext string `json:"workflowContext"`
 	FromDate        string `json:"fromDate"`
 	ToDate          string `json:"toDate"`
-	Status          string `json:"status"`
+	Status          Status `json:"status"`
 }
 
 type ScheduleConnection struct {
@@ -59,4 +65,55 @@ type UpdateScheduleInput struct {
 	WorkflowContext *string `json:"workflowContext,omitempty"`
 	FromDate        *string `json:"fromDate,omitempty"`
 	ToDate          *string `json:"toDate,omitempty"`
+}
+
+type Status string
+
+const (
+	StatusUnknown    Status = "UNKNOWN"
+	StatusCompleted  Status = "COMPLETED"
+	StatusFailed     Status = "FAILED"
+	StatusPaused     Status = "PAUSED"
+	StatusRunning    Status = "RUNNING"
+	StatusTerminated Status = "TERMINATED"
+	StatusTimedOut   Status = "TIMED_OUT"
+)
+
+var AllStatus = []Status{
+	StatusUnknown,
+	StatusCompleted,
+	StatusFailed,
+	StatusPaused,
+	StatusRunning,
+	StatusTerminated,
+	StatusTimedOut,
+}
+
+func (e Status) IsValid() bool {
+	switch e {
+	case StatusUnknown, StatusCompleted, StatusFailed, StatusPaused, StatusRunning, StatusTerminated, StatusTimedOut:
+		return true
+	}
+	return false
+}
+
+func (e Status) String() string {
+	return string(e)
+}
+
+func (e *Status) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Status(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Status", str)
+	}
+	return nil
+}
+
+func (e Status) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
