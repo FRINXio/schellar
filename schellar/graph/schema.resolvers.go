@@ -215,6 +215,14 @@ func (r *queryResolver) Schedules(ctx context.Context, after *string, before *st
 		return nil, err
 	}
 
+	if after != nil && *after == "" {
+		after = nil
+	}
+
+	if before != nil && *before == "" {
+		before = nil
+	}
+
 	var schedules []*model.Schedule
 
 	if filter != nil {
@@ -225,26 +233,42 @@ func (r *queryResolver) Schedules(ctx context.Context, after *string, before *st
 
 	totalCount := len(schedules)
 
-	var hasNext bool
-	var hasPrevious bool
-
-	schedules, hasPrevious, hasNext = getSchedulesWithFilter(after, before, schedules, first, last)
-
-	edges := make([]*model.ScheduleEdge, len(schedules))
-	for i, schedule := range schedules {
-		cursor := schedule.Name
-		edges[i] = &model.ScheduleEdge{
-			Cursor: cursor,
-			Node:   schedule,
-		}
-	}
-
+	var hasNext bool = false
+	var hasPrevious bool = false
 	var statsCursor string = ""
 	var endCursor string = ""
+	var edges = make([]*model.ScheduleEdge, 0)
 
-	if len(edges) > 0 {
-		statsCursor = edges[0].Cursor
-		endCursor = edges[len(edges)-1].Cursor
+	if totalCount > 0 {
+
+		if after == nil && first != nil {
+			schedules, hasPrevious, hasNext = getSchedulesFirst(schedules, first)
+		}
+
+		if after != nil && first != nil {
+			schedules, hasPrevious, hasNext = getSchedulesFirstAfter(schedules, first, after)
+		}
+
+		if before == nil && last != nil {
+			schedules, hasPrevious, hasNext = getSchedulesLast(schedules, last)
+		}
+
+		if before != nil && last != nil {
+			schedules, hasPrevious, hasNext = getSchedulesLastBefore(schedules, last, before)
+		}
+
+		edges = make([]*model.ScheduleEdge, len(schedules))
+		for i, schedule := range schedules {
+			cursor := schedule.Name
+			edges[i] = &model.ScheduleEdge{
+				Cursor: cursor,
+				Node:   schedule,
+			}
+		}
+		if len(edges) > 0 {
+			statsCursor = edges[0].Cursor
+			endCursor = edges[len(edges)-1].Cursor
+		}
 	}
 
 	pageInfo := model.PageInfo{

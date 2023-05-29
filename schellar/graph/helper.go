@@ -137,58 +137,85 @@ func handlePagination(after *string, before *string, first *int, last *int) erro
 	return nil
 }
 
-func getSchedulesWithFilter(after *string, before *string, schedules []*model.Schedule, first *int, last *int) ([]*model.Schedule, bool, bool) {
-	var filteredSchedules []*model.Schedule
+func getSchedulesFirst(schedules []*model.Schedule, first *int) ([]*model.Schedule, bool, bool) {
+
+	hasNextPage := true
+	allSchedules := len(schedules)
+	strip := *first
+
+	if allSchedules <= strip {
+		hasNextPage = false
+		strip = allSchedules
+	}
+
+	filteredSchedules := schedules[0:strip]
+	return filteredSchedules, false, hasNextPage
+}
+
+func getSchedulesLast(schedules []*model.Schedule, last *int) ([]*model.Schedule, bool, bool) {
+
+	hasPreviousPage := true
+	allSchedules := len(schedules)
+	strip := *last
+
+	if allSchedules <= strip {
+		hasPreviousPage = false
+		strip = allSchedules
+	}
+
+	filteredSchedules := schedules[allSchedules-strip : allSchedules]
+	return filteredSchedules, hasPreviousPage, false
+}
+
+func getSchedulesFirstAfter(schedules []*model.Schedule, first *int, after *string) ([]*model.Schedule, bool, bool) {
 
 	var hasPreviousPage bool = false
 	var hasNextPage bool = false
-	var cursor string
-	var position int
 
-	if after != nil {
-		cursor = *after
-		filteredSchedules, position = getScheduleAfterCursor(cursor, schedules)
-		filteredCount := len(filteredSchedules)
+	filteredSchedules, position := getScheduleAfterCursor(*after, schedules)
+	filteredCount := len(filteredSchedules)
 
-		endIndex := *first
-		if endIndex > filteredCount {
-			endIndex = filteredCount
-		}
-		filteredSchedules = filteredSchedules[0:endIndex]
-		if position > 0 {
-			hasPreviousPage = true
-		}
-		if endIndex < filteredCount {
-			hasNextPage = true
-		}
+	endIndex := *first
+	if endIndex > filteredCount {
+		endIndex = filteredCount
+	}
+	filteredSchedules = filteredSchedules[0:endIndex]
 
-	} else if before != nil {
-		cursor = *before
+	if position > 0 {
+		hasPreviousPage = true
+	}
+	if endIndex < filteredCount {
+		hasNextPage = true
+	}
 
-		filteredCountBefore := len(schedules)
-		filteredSchedules, position = getScheduleBeforeCursor(cursor, schedules)
-		filteredCount := len(filteredSchedules)
+	return filteredSchedules, hasPreviousPage, hasNextPage
+}
 
-		startIndex := filteredCount - *last
-		if startIndex < 0 {
-			startIndex = 0
-		}
+func getSchedulesLastBefore(schedules []*model.Schedule, last *int, before *string) ([]*model.Schedule, bool, bool) {
 
-		filteredSchedules = filteredSchedules[startIndex:filteredCount]
-		filteredCount = len(filteredSchedules)
+	var hasPreviousPage bool = false
+	var hasNextPage bool = false
 
-		prevousScheduls := position - filteredCount
-		nextScheduls := filteredCountBefore - position + 1
+	filteredCountBefore := len(schedules)
+	filteredSchedules, position := getScheduleBeforeCursor(*before, schedules)
+	filteredCount := len(filteredSchedules)
 
-		if prevousScheduls > 0 {
-			hasPreviousPage = true
-		}
-		if nextScheduls > 0 {
-			hasNextPage = true
-		}
+	startIndex := filteredCount - *last
+	if startIndex < 0 {
+		startIndex = 0
+	}
 
-	} else {
-		return schedules, hasPreviousPage, hasNextPage
+	filteredSchedules = filteredSchedules[startIndex:filteredCount]
+	filteredCount = len(filteredSchedules)
+
+	prevousScheduls := position - filteredCount
+	nextScheduls := filteredCountBefore - (position + 1)
+
+	if prevousScheduls > 0 {
+		hasPreviousPage = true
+	}
+	if nextScheduls > 0 {
+		hasNextPage = true
 	}
 
 	return filteredSchedules, hasPreviousPage, hasNextPage
