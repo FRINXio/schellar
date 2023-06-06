@@ -92,27 +92,6 @@ services:
 
 * Create a new schedule to run the sample Conductor Workflow every minute
 
-```
-curl -X POST \
-  http://localhost:3000/schedule \
-  -H 'Content-Type: application/json' \
-  -H 'cache-control: no-cache' \
-  -d '{
-	"name": "seconds-tests1",
-	"enabled": true,
-	"parallelRuns": false,
-	"workflowName": "encode_and_deploy",
-	"workflowVersion": "1",
-	"cronString": "0 * * ? * *",
-	"workflowContext": {
-		"param1": "value1",
-		"param2": "value2"
-	},
-	"fromDate": "2019-01-01T15:04:05Z",
-	"toDate": "2029-07-01T15:04:05Z"
-}
-'
-```
 
 * Open http://localhost:8081 to access Mongo UI and access the collection "schedules" to view status
 
@@ -122,37 +101,20 @@ curl -X POST \
 
 * If you Terminate the running Workflow in Conductor, Schellar will create another workflow instance when its timer triggers.
 
-## API
+## Graphql API
 
-  * **POST /schedule**
-    * Creates a new schedule
-    * JSON Body
+Visit Gralhql playground to see documentation: http://localhost:3000
 
-```shell
-  curl -X POST \
-  http://localhost:3000/schedule \
-  -H 'Content-Type: application/json' \
-  -H 'cache-control: no-cache' \
-  -d '{
-	"name": "seconds-tests1",
-	"enabled": true,
-	"parallelRuns": false,
-	"workflowName": "encode_and_deploy",
-	"workflowVersion": "1",
-	"cronString": "*/30 * * ? * *",
-	"workflowContext": {
-		"param1": "value1",
-		"param2": "value2"
-	},
-	"fromDate": "2019-01-01T15:04:05Z",
-	"toDate": "2019-07-01T15:04:05Z",
-	"correlationId" "myid",
-        "taskToDomain": {
-		"*": "mydomain"
-	}
-      }'
-```
-* Where
+Queries: 
+* schedule - list schedule by schedule name
+* schedules - list all schedules, filtration by workflowName, workflowVersion, pagination
+
+Mutations: 
+* createSchedule - create new schedule with unique name 
+* updateSchedule - update schedule by schedule name
+* deleteSchedule - delete schedule with schedule name
+
+Parameters:
   * **name** - schedule name (must be unique)
   * **enabled** - active or not
   * **cronString** - cron string specification of the timer used to trigger new Conductor workflows from time to time (see more at https://crontab.guru)
@@ -166,24 +128,6 @@ curl -X POST \
   * **parallelRuns** - if true, every trigger from timer (according to cron string) will generate a new workflow instance in Conductor. if false, no new workflows will be generated if there are other workflow instances in state RUNNING, so that only one RUNNING instance will be present at a time
   * **correlationId** - passed to Conductor when starting a workflow, see https://netflix.github.io/conductor/gettingstarted/startworkflow/
   * **taskToDomain** - passed to Conductor when starting a workflow, see https://netflix.github.io/conductor/configuration/taskdomains/
-
-  * **GET /schedule**
-    * Returns a list of schedules
-
-  * **PUT /schedule/{schedule-name}**
-    * Updates existing schedules (updating active timers accordingly)
-    * JSON Body with contents that would be updated
-
-```shell
-curl -X PUT \
-  http://localhost:3000/schedule/seconds-tests1 \
-  -H 'Content-Type: application/json' \
-  -H 'cache-control: no-cache' \
-  -d '{
-	"enabled": true,
-	"cronString": "*/45 * * ? * *"
-      }'
-```
 
 ## ENV configurations
 Schellar is configured using [GoDotEnv](https://github.com/joho/godotenv).

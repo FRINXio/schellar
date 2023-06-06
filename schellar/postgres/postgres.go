@@ -52,7 +52,7 @@ func runMigrations(connectionPool pgxpool.Pool) {
 	}
 }
 
-func InitDB() PostgresDB {
+func InitDB() ifc.DB {
 	var err error
 	url, ok := os.LookupEnv("POSTGRES_DATABASE_URL")
 	if !ok {
@@ -139,11 +139,15 @@ task_to_domain,
 last_update`
 
 func (db PostgresDB) FindAll() ([]ifc.Schedule, error) {
-	return db.queryAll("SELECT " + rowNames + " FROM schedule")
+	return db.queryAll("SELECT " + rowNames + " FROM schedule ORDER BY schedule_name ASC")
+}
+
+func (db PostgresDB) FindAllByWorkflowType(workflowName string, workflowId string) ([]ifc.Schedule, error) {
+	return db.queryAll("SELECT "+rowNames+" FROM schedule WHERE workflow_name=$1 and workflow_version=$2 ORDER BY schedule_name ASC", workflowName, workflowId)
 }
 
 func (db PostgresDB) FindAllByEnabled(enabled bool) ([]ifc.Schedule, error) {
-	return db.queryAll("SELECT "+rowNames+" FROM schedule WHERE is_enabled=$1", enabled)
+	return db.queryAll("SELECT "+rowNames+" FROM schedule WHERE is_enabled=$1 ORDER BY schedule_name ASC", enabled)
 }
 
 func (db PostgresDB) FindByName(scheduleName string) (*ifc.Schedule, error) {
@@ -165,7 +169,7 @@ func (db PostgresDB) FindByName(scheduleName string) (*ifc.Schedule, error) {
 }
 
 func (db PostgresDB) FindByStatus(status string) ([]ifc.Schedule, error) {
-	return db.queryAll("SELECT "+rowNames+" FROM schedule WHERE workflow_status=$1", status)
+	return db.queryAll("SELECT "+rowNames+" FROM schedule WHERE workflow_status=$1 ORDER BY schedule_name ASC", status)
 }
 
 func (db PostgresDB) Insert(schedule ifc.Schedule) error {

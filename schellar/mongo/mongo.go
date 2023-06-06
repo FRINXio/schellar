@@ -59,6 +59,16 @@ func (db MongoDB) FindAll() ([]ifc.Schedule, error) {
 	return schedules, err
 }
 
+func (db MongoDB) FindAllByWorkflowType(workflowName string, workflowId string) ([]ifc.Schedule, error) {
+	sc := db.mongoSession.Copy()
+	defer sc.Close()
+
+	st := sc.DB(db.dbName).C("schedules")
+	var activeSchedules []ifc.Schedule
+	err := st.Find(map[string]interface{}{"workflowName": workflowName, "workflowId": workflowId}).All(&activeSchedules) // TODO SORT BY SCHEDULE_NAME ASC
+	return activeSchedules, err
+}
+
 func (db MongoDB) FindAllByEnabled(enabled bool) ([]ifc.Schedule, error) {
 	sc := db.mongoSession.Copy()
 	defer sc.Close()

@@ -1,4 +1,4 @@
-package main
+package scheduler
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ func launchWorkflow(scheduleName string) error {
 
 	logrus.Debugf("Loading schedule definitions from DB")
 
-	schedule, err := db.FindByName(scheduleName)
+	schedule, err := Configuration.Db.FindByName(scheduleName)
 	if err != nil {
 		logrus.Errorf("Couldn't find schedule %s", scheduleName)
 		return err
@@ -38,7 +38,7 @@ func launchWorkflow(scheduleName string) error {
 	wfb, _ := json.Marshal(wf)
 
 	logrus.Debugf("Launching Workflow %s", wf)
-	url := fmt.Sprintf("%s/workflow", conductorURL)
+	url := fmt.Sprintf("%s/workflow", Configuration.ConductorURL)
 	resp, data, err := postHTTP(url, wfb)
 	if err != nil {
 		logrus.Errorf("Call to Conductor POST /workflow failed. err=%s", err)
@@ -54,7 +54,7 @@ func launchWorkflow(scheduleName string) error {
 
 func getWorkflow(name string, version string) (map[string]interface{}, error) {
 	logrus.Debugf("getWorkflow %s", name)
-	resp, data, err := getHTTP(fmt.Sprintf("%s/metadata/workflow/%s?version=%s", conductorURL, name, version))
+	resp, data, err := getHTTP(fmt.Sprintf("%s/metadata/workflow/%s?version=%s", Configuration.ConductorURL, name, version))
 	if err != nil {
 		return nil, fmt.Errorf("GET /metadata/workflow/name failed. err=%s", err)
 	}
@@ -72,7 +72,7 @@ func getWorkflow(name string, version string) (map[string]interface{}, error) {
 
 func getWorkflowInstance(workflowID string) (map[string]interface{}, error) {
 	logrus.Debugf("getWorkflowInstance %s", workflowID)
-	resp, data, err := getHTTP(fmt.Sprintf("%s/workflow/%s?includeTasks=false", conductorURL, workflowID))
+	resp, data, err := getHTTP(fmt.Sprintf("%s/workflow/%s?includeTasks=false", Configuration.ConductorURL, workflowID))
 	if err != nil {
 		return nil, fmt.Errorf("GET /workflow/%s?includeTasks=false failed. err=%s", err, workflowID)
 	}
@@ -102,7 +102,7 @@ func findWorkflows(workflowType string, scheduleName string, running bool) (map[
 	query := fmt.Sprintf("workflowType='%s' AND %s", workflowType, runstr)
 
 	logrus.Debugf("search query=%s", query)
-	sr := fmt.Sprintf("%s/workflow/search?query=%s&sort=endTime:DESC&size=5", conductorURL, url.PathEscape(query))
+	sr := fmt.Sprintf("%s/workflow/search?query=%s&sort=endTime:DESC&size=5", Configuration.ConductorURL, url.PathEscape(query))
 	resp, data, err := getHTTP(sr)
 
 	if err != nil {

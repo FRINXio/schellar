@@ -1,4 +1,4 @@
-name: Docker
+name: PR check
 
 on: pull_request
 
@@ -6,9 +6,45 @@ env:
   IMAGE_NAME: frinx/uniflow-schellar
 
 jobs:
-  security-test:
+  graphql-generator-check:
     runs-on: ubuntu-latest
-    
+    defaults:
+      run:
+        working-directory: schellar
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Build
+      run: |
+        go get github.com/99designs/gqlgen
+        go run github.com/99designs/gqlgen generate
+
+    - name: Verify Changed files
+      uses: tj-actions/verify-changed-files@v14
+      id: verify-changed-files
+      with:
+        files: |
+             schellar/graph/*
+
+    - name: Run step only when any of the above files change
+      if: steps.verify-changed-files.outputs.files_changed == 'true'
+      run: |
+        echo """Changed files: ${{ steps.verify-changed-files.outputs.changed_files }}
+        echo """Please execute: 
+          go get github.com/99designs/gqlgen
+          go run github.com/99designs/gqlgen generate
+          git diff
+        """
+        exit 1
+
+  security-test:
+    needs: graphql-generator-check
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
