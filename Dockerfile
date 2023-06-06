@@ -10,6 +10,7 @@ FROM alpine
 
 WORKDIR /schellar
 
+RUN apk upgrade --available --no-cache
 RUN addgroup -S frinx && adduser -S frinx -G frinx
 
 USER frinx
