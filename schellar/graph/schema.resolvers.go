@@ -90,8 +90,22 @@ func (r *mutationResolver) CreateSchedule(ctx context.Context, input model.Creat
 
 // UpdateSchedule is the resolver for the updateSchedule field.
 func (r *mutationResolver) UpdateSchedule(ctx context.Context, name string, input model.UpdateScheduleInput) (*model.Schedule, error) {
-	var schedule = ifc.Schedule{
-		Name: name,
+
+	err := ValidateName(name)
+	if err != nil {
+		logrus.Debugf("Error validating schedule. err=%v", err)
+		return nil, fmt.Errorf("Error validating schedule %s", err)
+	}
+
+	schedule, err := scheduler.Configuration.Db.FindByName(name)
+	if err != nil {
+		logrus.Debugf("Error checking for existing schedule name. err=%v", err)
+		return nil, fmt.Errorf("Error checking for existing schedule name")
+
+	}
+	if schedule == nil {
+		logrus.Debugf("Schedule not found with name '%s'", name)
+		return nil, fmt.Errorf("Schedule not found with name '%s'", name)
 	}
 
 	if input.WorkflowName != nil {
@@ -139,26 +153,14 @@ func (r *mutationResolver) UpdateSchedule(ctx context.Context, name string, inpu
 		}
 		schedule.ToDate = &toDate
 	}
+	err = schedule.ValidateAndUpdate()
 
-	err := schedule.ValidateAndUpdate()
 	if err != nil {
 		logrus.Debugf("Error validating schedule. err=%v", err)
 		return nil, fmt.Errorf("Error validating schedule %s", err)
 	}
 
-	found, err := scheduler.Configuration.Db.FindByName(schedule.Name)
-	if err != nil {
-		logrus.Debugf("Error checking for existing schedule name. err=%v", err)
-		return nil, fmt.Errorf("Error checking for existing schedule name")
-
-	}
-	if found == nil {
-		logrus.Debugf("Schedule not found with name '%s'", schedule.Name)
-		return nil, fmt.Errorf("Schedule not found with name '%s'", schedule.Name)
-
-	}
-
-	err = scheduler.Configuration.Db.Update(schedule)
+	err = scheduler.Configuration.Db.Update(*schedule)
 	if err != nil {
 		logrus.Debugf("Error storing schedule to the database. err=%s", err)
 		return nil, fmt.Errorf("Error storing schedule to the database. err=%s", err)
@@ -166,7 +168,7 @@ func (r *mutationResolver) UpdateSchedule(ctx context.Context, name string, inpu
 	}
 
 	scheduler.PrepareTimers()
-	return ConvertIfcToModel(&schedule), nil
+	return ConvertIfcToModel(schedule), nil
 }
 
 // DeleteSchedule is the resolver for the deleteSchedule field.
