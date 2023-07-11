@@ -4,12 +4,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/frinx/schellar/graph/model"
 	"github.com/frinx/schellar/ifc"
 	"github.com/frinx/schellar/scheduler"
 )
+
+func ValidateName(name string) error {
+	if name == "" {
+		return errors.New("'name' is required")
+	}
+	if strings.Contains(name, "/") {
+		return errors.New("'name' cannot contain '/' character")
+	}
+	return nil
+}
 
 func StringToStatusType(s string) model.Status {
 	for _, status := range model.AllStatus {
