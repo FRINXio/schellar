@@ -8,6 +8,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflag
 
 FROM alpine
 
+ARG git_commit=unspecified
+LABEL git_commit="${git_commit}"
 LABEL org.opencontainers.image.source="https://github.com/FRINXio/schellar"
 
 WORKDIR /schellar
