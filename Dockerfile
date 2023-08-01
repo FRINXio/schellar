@@ -8,6 +8,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflag
 
 FROM alpine
 
+LABEL org.opencontainers.image.source="https://github.com/FRINXio/schellar"
+
 WORKDIR /schellar
 
 RUN apk upgrade --available --no-cache
