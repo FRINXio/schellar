@@ -3,14 +3,14 @@ module github.com/frinx/schellar
 go 1.18
 
 require (
-	github.com/99designs/gqlgen v0.17.34
+	github.com/99designs/gqlgen v0.17.36
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/jackc/tern v1.13.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/vektah/gqlparser/v2 v2.5.4
+	github.com/vektah/gqlparser/v2 v2.5.8
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 )
 
