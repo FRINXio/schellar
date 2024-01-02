@@ -25,7 +25,7 @@ jobs:
         go run github.com/99designs/gqlgen generate
 
     - name: Verify Changed files
-      uses: tj-actions/verify-changed-files@v14
+      uses: tj-actions/verify-changed-files@v17
       id: verify-changed-files
       with:
         files: |
