@@ -1,0 +1,21 @@
+name: Hive Check
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  hive-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: schema check
+        env:
+          HIVE_TOKEN: ${{ secrets.HIVE_TOKEN }}
+          SCHEMA_PATH: "schellar/graph/schema.graphqls"
+        run: |
+          curl -sSL https://graphql-hive.com/install.sh | sh
+          hive schema:check ${{ env.SCHEMA_PATH }} \
+            --registry.accessToken ${{ env.HIVE_TOKEN }} \
+            --github
