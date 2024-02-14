@@ -92,3 +92,4 @@ jobs:
               docker push $IMAGE_ID:$VERSION
             fi
           fi
+
