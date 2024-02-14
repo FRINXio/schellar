@@ -4,11 +4,13 @@ on:
   push:
     # Publish `master` as Docker `latest` image.
     branches:
-      - master
+      - 'master'
+      - '[0-9]+.X-stable'
 
     # Publish `v1.2.3` tags as releases.
     tags:
-      - v*
+      - 'v*'
+      - 'v[0-9]+.[0-9]+.[0-9]-stable'
 
   # Run tests for any PRs.
   pull_request:
@@ -54,42 +56,29 @@ jobs:
           image-name: ${{ env.IMAGE_NAME }}:latest
           # severity-threshold: CRITICAL
 
-      - name: Log into docker hub
-        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+      #### Set tags based on source type ####
 
-      - name: Push image
+      - name: Set tag for latest image
+        if: github.ref_type == 'branch' && startsWith(github.ref, 'refs/heads/master')
         run: |
-          IMAGE_ID=$IMAGE_NAME
+          echo "IMAGE_TAG=$(echo 'latest')" >> "$GITHUB_ENV"
 
-          # Change all uppercase to lowercase
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+      - name: Set tag for stable-latest image
+        if: github.ref_type == 'branch' && endsWith(github.ref, '-stable')
+        run: |
+          echo "IMAGE_TAG=$(echo 'stable-latest')" >> "$GITHUB_ENV"
 
-          # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+      - name: Set tag for stable-release image
+        if: github.ref_type == 'tag' && endsWith(github.ref, '-stable')
+        run: |
+          echo "IMAGE_TAG=$(echo $GITHUB_REF | cut -d / -f 3 | sed -e 's/^v-//' | sed -e 's/-stable//')" >> "$GITHUB_ENV"
 
-          # Strip "v" prefix from tag name
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+      - name: Set tag for release image
+        if: ${{ github.ref_type == 'tag' && !endsWith(github.ref, '-stable') }}
+        run: |
+          echo "IMAGE_TAG=$(echo $GITHUB_REF | cut -d / -f 3 | sed -e 's/^v-//')" >> "$GITHUB_ENV"
 
-          # Use Docker `latest` tag convention
-          [ "$VERSION" == "master" ] && VERSION=latest
-
-          echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
-
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
-
-          # Add latest tag if we are on master and github.ref points to a tag
-          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
-            MASTER=$(git show-ref --hash origin/master)
-            echo "master: $MASTER"
-            HEAD=$(git rev-parse HEAD)
-            echo "head: $HEAD"
-            echo "github.ref ${{ github.ref }}"
-            if [[ $MASTER == $HEAD ]]; then
-              VERSION=latest
-              echo VERSION=$VERSION
-              docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-              docker push $IMAGE_ID:$VERSION
-            fi
-          fi
+      - name: Push stable-release image
+        run: |
+          docker tag $IMAGE_NAME:latest $IMAGE_NAME:${IMAGE_TAG}
+#          docker push $IMAGE_NAME:${IMAGE_TAG}
