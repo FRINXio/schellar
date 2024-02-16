@@ -22,9 +22,12 @@ jobs:
       - name: schema check
         env:
           HIVE_TOKEN: ${{ secrets.HIVE_TOKEN }}
+          HIVE_STABLE_LATEST_TOKEN: ${{ secrets.HIVE_STABLE_LATEST_TOKEN }}
           SCHEMA_PATH: "schellar/graph/schema.graphqls"
+
+        if: github.ref_type == 'branch' && endsWith(github.ref, '-stable')
         run: |
           curl -sSL https://graphql-hive.com/install.sh | sh
           hive schema:check ${{ env.SCHEMA_PATH }} \
-            --registry.accessToken ${{ env.HIVE_TOKEN }} \
+            --registry.accessToken ${{ env.HIVE_STABLE_LATEST_TOKEN }} \
             --github
