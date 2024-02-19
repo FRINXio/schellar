@@ -2,7 +2,7 @@ name: Docker
 
 on:
   push:
-    # Publish `master` as Docker `latest` image.
+    # Publish `master` and `stable` as Docker `latest` image.
     branches:
       - 'master'
       - '[0-9]+.X-stable'
@@ -14,7 +14,6 @@ on:
 
   # Run tests for any PRs.
   pull_request:
-  workflow_dispatch:
 
 env:
   # TODO: Change variable to your image's name.
@@ -48,37 +47,52 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build image
-        run: docker build . --file Dockerfile --build-arg git_commit=$(git rev-parse HEAD) --tag $IMAGE_NAME
-
-      - uses: Azure/container-scan@v0
-        with:
-          image-name: ${{ env.IMAGE_NAME }}:latest
-          # severity-threshold: CRITICAL
-
       #### Set tags based on source type ####
 
-      - name: Set tag for latest image
+      - name: Set tag and hive token for latest image
         if: github.ref_type == 'branch' && startsWith(github.ref, 'refs/heads/master')
         run: |
           echo "IMAGE_TAG=$(echo 'latest')" >> "$GITHUB_ENV"
+          echo "HIVE_TOKEN=${{ secrets.HIVE_MASTER_LATEST_TOKEN }}" >> "$GITHUB_ENV"
 
-      - name: Set tag for stable-latest image
+      - name: Set tag and hive token for stable-latest image
         if: github.ref_type == 'branch' && endsWith(github.ref, '-stable')
         run: |
           echo "IMAGE_TAG=$(echo 'stable-latest')" >> "$GITHUB_ENV"
+          echo "HIVE_TOKEN=${{ secrets.HIVE_STABLE_LATEST_TOKEN }}" >> "$GITHUB_ENV"
 
-      - name: Set tag for stable-release image
+      - name: Set tag and hive token for stable-release image
         if: github.ref_type == 'tag' && endsWith(github.ref, '-stable')
         run: |
           echo "IMAGE_TAG=$(echo $GITHUB_REF | cut -d / -f 3 | sed -e 's/^v-//' | sed -e 's/-stable//')" >> "$GITHUB_ENV"
+          echo "HIVE_TOKEN=${{ secrets.HIVE_STABLE_RELEASE_TOKEN }}" >> "$GITHUB_ENV"
 
-      - name: Set tag for release image
+      - name: Set tag and hive token for release image
         if: ${{ github.ref_type == 'tag' && !endsWith(github.ref, '-stable') }}
         run: |
           echo "IMAGE_TAG=$(echo $GITHUB_REF | cut -d / -f 3 | sed -e 's/^v-//')" >> "$GITHUB_ENV"
+          echo "HIVE_TOKEN=${{ secrets.HIVE_MASTER_RELEASE_TOKEN }}" >> "$GITHUB_ENV"
 
-      - name: Push stable-release image
+      - name: Build image
+        run: docker build . --file Dockerfile --build-arg git_commit=$(git rev-parse HEAD) --tag $IMAGE_NAME:${IMAGE_TAG}
+
+      - uses: Azure/container-scan@v0
+        with:
+          image-name: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          # severity-threshold: CRITICAL
+
+      - name: Log into docker hub
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+
+      - name: Push image
         run: |
-          docker tag $IMAGE_NAME:latest $IMAGE_NAME:${IMAGE_TAG}
-#          docker push $IMAGE_NAME:${IMAGE_TAG}
+          docker push $IMAGE_NAME:${IMAGE_TAG}
+
+      - name: Hive publish
+        env:
+          SCHEMA_PATH: "schellar/graph/schema.graphqls"
+        run: |
+          curl -sSL https://graphql-hive.com/install.sh | sh
+          hive schema:publish ${{ env.SCHEMA_PATH }} \
+            --registry.accessToken ${HIVE_TOKEN} \
+            --github

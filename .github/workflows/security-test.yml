@@ -1,8 +1,6 @@
 name: PR check
 
-on: 
-  pull_request:
-  workflow_dispatch:
+on: pull_request
 
 env:
   IMAGE_NAME: frinx/uniflow-schellar
