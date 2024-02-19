@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - 'master'
-      - '[0-9]+.X-stable'
+      - '[0-9]+.[0-9]+.X-stable'
 
     tags:
       - 'v*'
@@ -18,16 +18,32 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
-      - name: schema publish
-        env:
-          HIVE_TOKEN: ${{ secrets.HIVE_TOKEN }}
-          HIVE_STABLE_LATEST_TOKEN: ${{ secrets.HIVE_STABLE_LATEST_TOKEN }}
-          # HIVE_ENDPOINT: ${{ secrets.HIVE_ENDPOINT }}
-          SCHEMA_PATH: "schellar/graph/schema.graphqls"
 
+      - name: Stable token
         if: github.ref_type == 'branch' && endsWith(github.ref, '-stable')
+        run: |
+          echo "TOKEN=${{ secrets.HIVE_STABLE_LATEST_TOKEN }}" >> "$GITHUB_ENV"
+
+      - name: Master token
+        if: github.ref_type == 'branch' && startsWith(github.ref, 'refs/heads/master')
+        run: |
+          echo "TOKEN=${{ secrets.HIVE_TOKEN }}" >> "$GITHUB_ENV"
+
+      - name: Stable release token
+        if: github.ref_type == 'tag' && endsWith(github.ref, '-stable')
+        run: |
+          echo "TOKEN=${{ secrets.HIVE_STABLE_RELEASE_TOKEN }}" >> "$GITHUB_ENV"
+
+      - name: Master release token
+        if: ${{ github.ref_type == 'tag' && !endsWith(github.ref, '-stable') }}
+        run: |
+          echo "TOKEN=${ secrets.HIVE_MASTER_RELEASE_TOKEN }" >> "$GITHUB_ENV"
+
+      - name: Schema publish
+        env:
+          SCHEMA_PATH: "schellar/graph/schema.graphqls"
         run: |
           curl -sSL https://graphql-hive.com/install.sh | sh
           hive schema:publish ${{ env.SCHEMA_PATH }} \
-            --registry.accessToken ${{ env.HIVE_STABLE_LATEST_TOKEN }} \
+            --registry.accessToken ${TOKEN} \
             --github
