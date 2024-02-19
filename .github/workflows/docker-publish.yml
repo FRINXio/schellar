@@ -2,17 +2,18 @@ name: Docker
 
 on:
   push:
-    # Publish `master` as Docker `latest` image.
+    # Publish `master` and `stable` as Docker `latest` image.
     branches:
-      - master
+      - 'master'
+      - '[0-9]+.X-stable'
 
     # Publish `v1.2.3` tags as releases.
     tags:
-      - v*
+      - 'v*'
+      - 'v[0-9]+.[0-9]+.[0-9]-stable'
 
   # Run tests for any PRs.
   pull_request:
-  workflow_dispatch:
 
 env:
   # TODO: Change variable to your image's name.
@@ -46,12 +47,38 @@ jobs:
         with:
           fetch-depth: 0
 
+      #### Set tags based on source type ####
+
+      - name: Set tag and hive token for latest image
+        if: github.ref_type == 'branch' && startsWith(github.ref, 'refs/heads/master')
+        run: |
+          echo "IMAGE_TAG=$(echo 'latest')" >> "$GITHUB_ENV"
+          echo "HIVE_TOKEN=${{ secrets.HIVE_MASTER_LATEST_TOKEN }}" >> "$GITHUB_ENV"
+
+      - name: Set tag and hive token for stable-latest image
+        if: github.ref_type == 'branch' && endsWith(github.ref, '-stable')
+        run: |
+          echo "IMAGE_TAG=$(echo 'stable-latest')" >> "$GITHUB_ENV"
+          echo "HIVE_TOKEN=${{ secrets.HIVE_STABLE_LATEST_TOKEN }}" >> "$GITHUB_ENV"
+
+      - name: Set tag and hive token for stable-release image
+        if: github.ref_type == 'tag' && endsWith(github.ref, '-stable')
+        run: |
+          echo "IMAGE_TAG=$(echo $GITHUB_REF | cut -d / -f 3 | sed -e 's/^v-//' | sed -e 's/-stable//')" >> "$GITHUB_ENV"
+          echo "HIVE_TOKEN=${{ secrets.HIVE_STABLE_RELEASE_TOKEN }}" >> "$GITHUB_ENV"
+
+      - name: Set tag and hive token for release image
+        if: ${{ github.ref_type == 'tag' && !endsWith(github.ref, '-stable') }}
+        run: |
+          echo "IMAGE_TAG=$(echo $GITHUB_REF | cut -d / -f 3 | sed -e 's/^v-//')" >> "$GITHUB_ENV"
+          echo "HIVE_TOKEN=${{ secrets.HIVE_MASTER_RELEASE_TOKEN }}" >> "$GITHUB_ENV"
+
       - name: Build image
-        run: docker build . --file Dockerfile --build-arg git_commit=$(git rev-parse HEAD) --tag $IMAGE_NAME
+        run: docker build . --file Dockerfile --build-arg git_commit=$(git rev-parse HEAD) --tag $IMAGE_NAME:${IMAGE_TAG}
 
       - uses: Azure/container-scan@v0
         with:
-          image-name: ${{ env.IMAGE_NAME }}:latest
+          image-name: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           # severity-threshold: CRITICAL
 
       - name: Log into docker hub
@@ -59,37 +86,13 @@ jobs:
 
       - name: Push image
         run: |
-          IMAGE_ID=$IMAGE_NAME
+          docker push $IMAGE_NAME:${IMAGE_TAG}
 
-          # Change all uppercase to lowercase
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-
-          # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-
-          # Strip "v" prefix from tag name
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-
-          # Use Docker `latest` tag convention
-          [ "$VERSION" == "master" ] && VERSION=latest
-
-          echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
-
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
-
-          # Add latest tag if we are on master and github.ref points to a tag
-          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
-            MASTER=$(git show-ref --hash origin/master)
-            echo "master: $MASTER"
-            HEAD=$(git rev-parse HEAD)
-            echo "head: $HEAD"
-            echo "github.ref ${{ github.ref }}"
-            if [[ $MASTER == $HEAD ]]; then
-              VERSION=latest
-              echo VERSION=$VERSION
-              docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-              docker push $IMAGE_ID:$VERSION
-            fi
-          fi
+      - name: Hive publish
+        env:
+          SCHEMA_PATH: "schellar/graph/schema.graphqls"
+        run: |
+          curl -sSL https://graphql-hive.com/install.sh | sh
+          hive schema:publish ${{ env.SCHEMA_PATH }} \
+            --registry.accessToken ${HIVE_TOKEN} \
+            --github
