@@ -26,5 +26,3 @@ cd schellar
 go test -v -short ./...
 
 trap testSchellar err exit
-
-
