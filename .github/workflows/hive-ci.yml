@@ -46,3 +46,4 @@ jobs:
           hive schema:check ${{ env.SCHEMA_PATH }} \
             --registry.accessToken ${HIVE_TOKEN} \
             --github
+
