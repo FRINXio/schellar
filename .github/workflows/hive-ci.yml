@@ -19,12 +19,12 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Stable token
-        if: github.ref_type == 'branch' && endsWith(github.ref, '-stable')
+        if: github.ref_type == 'branch' && endsWith(github.base_ref, '-stable')
         run: |
           echo "HIVE_TOKEN=${{ secrets.HIVE_STABLE_LATEST_TOKEN }}" >> "$GITHUB_ENV"
 
       - name: Master token
-        if: github.ref_type == 'branch' && startsWith(github.ref, 'refs/heads/master')
+        if: github.ref_type == 'branch' && github.base_ref == 'master'
         run: |
           echo "HIVE_TOKEN=${{ secrets.HIVE_MASTER_LATEST_TOKEN }}" >> "$GITHUB_ENV"
 
