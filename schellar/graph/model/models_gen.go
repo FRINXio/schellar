@@ -20,11 +20,17 @@ type CreateScheduleInput struct {
 	ToDate          *string `json:"toDate,omitempty"`
 }
 
+type Mutation struct {
+}
+
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
 	HasPreviousPage bool    `json:"hasPreviousPage"`
 	StartCursor     *string `json:"startCursor,omitempty"`
 	EndCursor       *string `json:"endCursor,omitempty"`
+}
+
+type Query struct {
 }
 
 type Schedule struct {
