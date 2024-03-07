@@ -16,6 +16,7 @@ import (
 )
 
 const defaultPort = "3000"
+const defaultPlaygoundQueryEndpoint = "/query"
 
 var config = scheduler.Configuration
 
@@ -55,9 +56,15 @@ func main() {
 }
 
 func startApi() {
+
+	playgroundQeryEndpoint := os.Getenv("PLAYGROUND_QUERY_ENDPOINT")
+	if playgroundQeryEndpoint == "" {
+		playgroundQeryEndpoint = defaultPlaygoundQueryEndpoint
+	}
+
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/", playground.ApolloSandboxHandler("GraphQL playground", playgroundQeryEndpoint))
 	http.Handle("/query", srv)
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/liveness", getLiveness)

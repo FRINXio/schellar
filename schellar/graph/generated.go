@@ -24,6 +24,7 @@ import (
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	return &executableSchema{
+		schema:     cfg.Schema,
 		resolvers:  cfg.Resolvers,
 		directives: cfg.Directives,
 		complexity: cfg.Complexity,
@@ -31,6 +32,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 }
 
 type Config struct {
+	Schema     *ast.Schema
 	Resolvers  ResolverRoot
 	Directives DirectiveRoot
 	Complexity ComplexityRoot
@@ -99,12 +101,16 @@ type QueryResolver interface {
 }
 
 type executableSchema struct {
+	schema     *ast.Schema
 	resolvers  ResolverRoot
 	directives DirectiveRoot
 	complexity ComplexityRoot
 }
 
 func (e *executableSchema) Schema() *ast.Schema {
+	if e.schema != nil {
+		return e.schema
+	}
 	return parsedSchema
 }
 
@@ -403,14 +409,14 @@ func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
 	if ec.DisableIntrospection {
 		return nil, errors.New("introspection disabled")
 	}
-	return introspection.WrapSchema(parsedSchema), nil
+	return introspection.WrapSchema(ec.Schema()), nil
 }
 
 func (ec *executionContext) introspectType(name string) (*introspection.Type, error) {
 	if ec.DisableIntrospection {
 		return nil, errors.New("introspection disabled")
 	}
-	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
+	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
 //go:embed "schema.graphqls"
@@ -3734,8 +3740,6 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 		}
 		switch k {
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -3743,8 +3747,6 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 			}
 			it.Name = data
 		case "workflowName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -3752,8 +3754,6 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 			}
 			it.WorkflowName = data
 		case "workflowVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowVersion"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -3761,8 +3761,6 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 			}
 			it.WorkflowVersion = data
 		case "cronString":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cronString"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -3770,8 +3768,6 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 			}
 			it.CronString = data
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -3779,8 +3775,6 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 			}
 			it.Enabled = data
 		case "parallelRuns":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parallelRuns"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -3788,8 +3782,6 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 			}
 			it.ParallelRuns = data
 		case "workflowContext":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowContext"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -3797,8 +3789,6 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 			}
 			it.WorkflowContext = data
 		case "fromDate":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromDate"))
 			data, err := ec.unmarshalODateTime2ᚖstring(ctx, v)
 			if err != nil {
@@ -3806,8 +3796,6 @@ func (ec *executionContext) unmarshalInputCreateScheduleInput(ctx context.Contex
 			}
 			it.FromDate = data
 		case "toDate":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toDate"))
 			data, err := ec.unmarshalODateTime2ᚖstring(ctx, v)
 			if err != nil {
@@ -3835,8 +3823,6 @@ func (ec *executionContext) unmarshalInputSchedulesFilterInput(ctx context.Conte
 		}
 		switch k {
 		case "workflowName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -3844,8 +3830,6 @@ func (ec *executionContext) unmarshalInputSchedulesFilterInput(ctx context.Conte
 			}
 			it.WorkflowName = data
 		case "workflowVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowVersion"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -3873,8 +3857,6 @@ func (ec *executionContext) unmarshalInputUpdateScheduleInput(ctx context.Contex
 		}
 		switch k {
 		case "workflowName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -3882,8 +3864,6 @@ func (ec *executionContext) unmarshalInputUpdateScheduleInput(ctx context.Contex
 			}
 			it.WorkflowName = data
 		case "workflowVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowVersion"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -3891,8 +3871,6 @@ func (ec *executionContext) unmarshalInputUpdateScheduleInput(ctx context.Contex
 			}
 			it.WorkflowVersion = data
 		case "cronString":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cronString"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -3900,8 +3878,6 @@ func (ec *executionContext) unmarshalInputUpdateScheduleInput(ctx context.Contex
 			}
 			it.CronString = data
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -3909,8 +3885,6 @@ func (ec *executionContext) unmarshalInputUpdateScheduleInput(ctx context.Contex
 			}
 			it.Enabled = data
 		case "parallelRuns":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parallelRuns"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -3918,8 +3892,6 @@ func (ec *executionContext) unmarshalInputUpdateScheduleInput(ctx context.Contex
 			}
 			it.ParallelRuns = data
 		case "workflowContext":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workflowContext"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -3927,8 +3899,6 @@ func (ec *executionContext) unmarshalInputUpdateScheduleInput(ctx context.Contex
 			}
 			it.WorkflowContext = data
 		case "fromDate":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromDate"))
 			data, err := ec.unmarshalODateTime2ᚖstring(ctx, v)
 			if err != nil {
@@ -3936,8 +3906,6 @@ func (ec *executionContext) unmarshalInputUpdateScheduleInput(ctx context.Contex
 			}
 			it.FromDate = data
 		case "toDate":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toDate"))
 			data, err := ec.unmarshalODateTime2ᚖstring(ctx, v)
 			if err != nil {
