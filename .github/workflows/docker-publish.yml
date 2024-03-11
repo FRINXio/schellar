@@ -64,13 +64,13 @@ jobs:
       - name: Set tag and hive token for stable-release image
         if: github.ref_type == 'tag' && endsWith(github.ref, '-stable')
         run: |
-          echo "IMAGE_TAG=$(echo $GITHUB_REF | cut -d / -f 3 | sed -e 's/^v-//' | sed -e 's/-stable//')" >> "$GITHUB_ENV"
+          echo "IMAGE_TAG=$(echo $GITHUB_REF | cut -d / -f 3 | sed -e 's/^v//' | sed -e 's/-stable//')" >> "$GITHUB_ENV"
           echo "HIVE_TOKEN=${{ secrets.HIVE_STABLE_RELEASE_TOKEN }}" >> "$GITHUB_ENV"
 
       - name: Set tag and hive token for release image
         if: ${{ github.ref_type == 'tag' && !endsWith(github.ref, '-stable') }}
         run: |
-          echo "IMAGE_TAG=$(echo $GITHUB_REF | cut -d / -f 3 | sed -e 's/^v-//')" >> "$GITHUB_ENV"
+          echo "IMAGE_TAG=$(echo $GITHUB_REF | cut -d / -f 3 | sed -e 's/^v//')" >> "$GITHUB_ENV"
           echo "HIVE_TOKEN=${{ secrets.HIVE_MASTER_RELEASE_TOKEN }}" >> "$GITHUB_ENV"
 
       - name: Build image
