@@ -19,6 +19,9 @@ func init() {
 		Db:                   dbConf(),
 		CheckIntervalSeconds: intervalConf(),
 		ConductorURL:         conductorUrlConf(),
+		AdminRoles:           conductorAdminRolesHeadersConf(),
+		AdminGroups:          conductorAdminGroupHeadersConf(),
+		From:                 "schellar",
 	}
 }
 
@@ -26,12 +29,27 @@ type Config struct {
 	Db                   ifc.DB
 	ConductorURL         string
 	CheckIntervalSeconds int
+	AdminRoles           string
+	AdminGroups          string
+	From                 string
 }
 
 func conductorUrlConf() string {
 	conductorURL := ifc.GetEnvOrDefault("CONDUCTOR_API_URL", "http://conductor-server:8080/api")
 	logrus.Infof("CONDUCTOR_API_URL=%s", conductorURL)
 	return conductorURL
+}
+
+func conductorAdminGroupHeadersConf() string {
+	conductorAdminGroups := ifc.GetEnvOrDefault("ADMIN_GROUPS", "network-admin")
+	logrus.Infof("ADMIN_GROUPS=%s", conductorAdminGroups)
+	return conductorAdminGroups
+}
+
+func conductorAdminRolesHeadersConf() string {
+	conductorAdminRoles := ifc.GetEnvOrDefault("ADMIN_ROLES", "OWNER")
+	logrus.Infof("ADMIN_ROLES=%s", conductorAdminRoles)
+	return conductorAdminRoles
 }
 
 func intervalConf() int {
