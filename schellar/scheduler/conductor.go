@@ -39,7 +39,7 @@ func launchWorkflow(scheduleName string) error {
 
 	logrus.Debugf("Launching Workflow %s", wf)
 	url := fmt.Sprintf("%s/workflow", Configuration.ConductorURL)
-	resp, data, err := postHTTP(url, wfb)
+	resp, data, err := postHTTP(url, wfb, Configuration.AdminGroups, Configuration.AdminRoles, Configuration.From)
 	if err != nil {
 		logrus.Errorf("Call to Conductor POST /workflow failed. err=%s", err)
 		return err
@@ -54,7 +54,7 @@ func launchWorkflow(scheduleName string) error {
 
 func getWorkflow(name string, version string) (map[string]interface{}, error) {
 	logrus.Debugf("getWorkflow %s", name)
-	resp, data, err := getHTTP(fmt.Sprintf("%s/metadata/workflow/%s?version=%s", Configuration.ConductorURL, name, version))
+	resp, data, err := getHTTP(fmt.Sprintf("%s/metadata/workflow/%s?version=%s", Configuration.ConductorURL, name, version), Configuration.AdminGroups, Configuration.AdminRoles, Configuration.From)
 	if err != nil {
 		return nil, fmt.Errorf("GET /metadata/workflow/name failed. err=%s", err)
 	}
@@ -72,7 +72,7 @@ func getWorkflow(name string, version string) (map[string]interface{}, error) {
 
 func getWorkflowInstance(workflowID string) (map[string]interface{}, error) {
 	logrus.Debugf("getWorkflowInstance %s", workflowID)
-	resp, data, err := getHTTP(fmt.Sprintf("%s/workflow/%s?includeTasks=false", Configuration.ConductorURL, workflowID))
+	resp, data, err := getHTTP(fmt.Sprintf("%s/workflow/%s?includeTasks=false", Configuration.ConductorURL, workflowID), Configuration.AdminGroups, Configuration.AdminRoles, Configuration.From)
 	if err != nil {
 		return nil, fmt.Errorf("GET /workflow/%s?includeTasks=false failed. err=%s", err, workflowID)
 	}
@@ -103,7 +103,7 @@ func findWorkflows(workflowType string, scheduleName string, running bool) (map[
 
 	logrus.Debugf("search query=%s", query)
 	sr := fmt.Sprintf("%s/workflow/search?query=%s&sort=endTime:DESC&size=5", Configuration.ConductorURL, url.PathEscape(query))
-	resp, data, err := getHTTP(sr)
+	resp, data, err := getHTTP(sr, Configuration.AdminGroups, Configuration.AdminRoles, Configuration.From)
 
 	if err != nil {
 		return nil, fmt.Errorf("GET /workflow/search failed. err=%s", err)
@@ -122,13 +122,16 @@ func findWorkflows(workflowType string, scheduleName string, running bool) (map[
 	return wfdata, nil
 }
 
-func postHTTP(url string, data []byte) (http.Response, []byte, error) {
+func postHTTP(url string, data []byte, groupHeader string, roleHeaders string, fromHeader string) (http.Response, []byte, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		logrus.Errorf("HTTP request creation failed. err=%s", err)
 		return http.Response{}, []byte{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-auth-user-groups", groupHeader)
+	req.Header.Set("x-auth-user-roles", roleHeaders)
+	req.Header.Set("from", fromHeader)
 
 	client := &http.Client{
 		Timeout: time.Second * 10,
@@ -146,12 +149,16 @@ func postHTTP(url string, data []byte) (http.Response, []byte, error) {
 	return *response, datar, nil
 }
 
-func getHTTP(url0 string) (http.Response, []byte, error) {
+func getHTTP(url0 string, groupHeader string, roleHeaders string, fromHeader string) (http.Response, []byte, error) {
 	req, err := http.NewRequest("GET", url0, nil)
 	if err != nil {
 		logrus.Errorf("HTTP request creation failed. err=%s", err)
 		return http.Response{}, []byte{}, err
 	}
+
+	req.Header.Set("x-auth-user-groups", groupHeader)
+	req.Header.Set("x-auth-user-roles", roleHeaders)
+	req.Header.Set("from", fromHeader)
 
 	client := &http.Client{
 		Timeout: time.Second * 10,

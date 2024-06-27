@@ -1,15 +1,21 @@
 package graph
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/frinx/schellar/graph/model"
 	"github.com/frinx/schellar/ifc"
+	"github.com/frinx/schellar/utils"
+
 	"github.com/frinx/schellar/scheduler"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 func ValidateName(name string) error {
@@ -230,4 +236,90 @@ func getSchedulesLastBefore(schedules []*model.Schedule, last *int, before *stri
 	}
 
 	return filteredSchedules, hasPreviousPage, hasNextPage
+}
+
+func extractAuthHeader(ctx context.Context) []string {
+
+	// Extract auth headers from request
+	headers := graphql.GetOperationContext(ctx).Headers
+	rbacHeaders := []string{headers.Get("x-auth-user-roles"), headers.Get("x-auth-user-groups")}
+
+	// Filter out empty strings
+	var nonEmptyHeaders []string
+	for _, header := range rbacHeaders {
+		if header != "" {
+			nonEmptyHeaders = append(nonEmptyHeaders, header)
+		}
+	}
+
+	// Join non-empty headers with a comma
+	userHeaderList := strings.Split(strings.Join(nonEmptyHeaders, ","), ",")
+	return utils.RemoveDuplicates(userHeaderList)
+}
+
+func extractUserHeader(ctx context.Context) error {
+
+	// Extract auth headers from request
+	headers := graphql.GetOperationContext(ctx).Headers
+	userHeader := headers.Get("from")
+
+	if userHeader == "" {
+		return errors.New("Missing header From")
+	}
+	return nil
+}
+
+func getAdminValues() []string {
+
+	adminRoles := []string{os.Getenv("ADMIN_ROLES"), os.Getenv("ADMIN_GROUPS")}
+
+	// Filter out empty strings
+	var nonEmptyRoles []string
+	for _, header := range adminRoles {
+		if header != "" {
+			nonEmptyRoles = append(nonEmptyRoles, header)
+		}
+	}
+
+	// Join non-empty headers with a comma
+	adminRolesList := strings.Split(strings.Join(nonEmptyRoles, ","), ",")
+	return utils.RemoveDuplicates(adminRolesList)
+}
+
+// hasCommonElement checks if at least one string from list1 exists in list2
+func hasCommonElement(list1, list2 []string) bool {
+	// Create a map to store adminHeaders for O(1) average time complexity lookups
+	adminHeaderMap := make(map[string]bool)
+	for _, header := range list2 {
+		adminHeaderMap[header] = true
+	}
+
+	// Check each userHeader if it exists in adminHeaderMap
+	for _, header := range list1 {
+		if adminHeaderMap[header] {
+			return true
+		}
+	}
+
+	return false
+}
+
+func checkPermissions(ctx context.Context) error {
+
+	// err := extractUserHeader(ctx)
+
+	// if err != nil {
+	// 	return err
+	// }
+
+	userHaders := extractAuthHeader(ctx)
+	adminRoles := utils.GetAdminValues()
+
+	// Check if at least one userHeader exists in adminHeaders
+	if hasCommonElement(userHaders, adminRoles) {
+		return nil
+	} else {
+		return errors.New("User has no permission to process operation")
+	}
+
 }
