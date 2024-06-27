@@ -306,12 +306,6 @@ func hasCommonElement(list1, list2 []string) bool {
 
 func checkPermissions(ctx context.Context) error {
 
-	// err := extractUserHeader(ctx)
-
-	// if err != nil {
-	// 	return err
-	// }
-
 	userHaders := extractAuthHeader(ctx)
 	adminRoles := utils.GetAdminValues()
 
